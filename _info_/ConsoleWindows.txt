@@ -1,0 +1,54 @@
+Ablakok egymásba ágyazhatóak.
+A root ablak a console saját ablak.
+Ablak nyitható és zárható, ez a két művelet van csak.
+Az ESC az ablak zárrása. (természetesen kontrol függvénnyel, amivel rákérdezhet ill. megakadályozhatja az ablak zárást,)
+Az ablaknak lehet kerete vagy sem, a keret karakterek szabályozhatóak.
+Ha nincs kerete, akkor a háttérszínnek lehet [metro style?] ablak határ mutató funkciója.
+Az ablak fix pozicijú vagy opcionálisan mozgatható a képernyőn (CtrAlt-kurzor).
+Az ablak alapból modális. Az ablakból nem lehet kilépni, csak bezárni azt és a befoglaló ablak aktuális mezőjáre lépni.
+A modális működés kikapcsolható, így kilépve az ablakból a befoglaló ablak adott mezőjére kerühetünk.
+[ha nem modális az ablak, akkor az általa lefedett input mezők nem szerkeszthetőek (ha csak egyetlen karakterük is fedésben vannak)]
+
+Az ablakon csak mezőkben lehet adatot megjeleníteni.
+Három féle mező van a display az input és a gomb. A mezők között tab-bal lehet közlekedni illetve az alt-kurzor mozgatással. 
+[opcionálisan lehet mouse eventet is definiálni a mezőre, így klick, double klick, egérkurzor belép és kilép] 
+
+A mezők nem fedhetik el egymást.
+A mezők egy nyilvántartásban szerepelnek sorrendbe szedve, két sorrendben elérhetőek:
+1./ tab order
+2./ validate order 
+(ha nincs speciális beállítás, akkor a tab order a mezők képernyő pozícióiból generálódik)
+(ha nincs speciális beállítás, a validate order automatikusan keletkezik a tab orderból)
+
+Mezők tipusai:
+- Label  (csak megjelenítés)
+- Edit   (adatbevitel)
+  - String
+  - integer
+  - decimal
+  - bool (I/N/Igen/Nem)
+- Button (kattintás ill. enter/space) 
+
+A mezőkhöz tartozhat hint + message(2 db mezőleírás és státus) szöveg, amit egy adott ablakban vagy mezőben jelenít meg automatikusan ill. hint esetén ablakot nyit vagy a keretrendszer grafikus megoldását használja ki.
+[speciális Fx gomb a hint+message1+message2 megjelenítésére ill a váltásra közöttük, ill. opcionálisan az egérrel is lehet]
+
+
+A táblázat egy speciális ablak amelyikbe generálva vannak mezők (VM kötéssel együtt).
+
+Opcionális bővítés az egér pozíció figyelés ill. kattintás lekezelés.
+
+Megvalósítás: Windows Console, Core Console, HtmlConsole (graph), Mobil App - console.
+
+Speciális gombokra (Fx) ablak elmentése új ablak előhozása (ablakváltás - alkalmazás váltás)
+
+MVVM - ablakhoz rendelhető mezők, automatikus oda-vissza adatmozgatás.
+[Egyetlen esemény, VM megváltozott - egyébként minden karakter leütés, minden mezőváltás esetén frissülnek a megjelenő adatmezők, esetleg poll-ozás fél másodpercenként.]
+
+Virtuális karakteres ablak méret lehet nagyobb, mint a fizikai, ekkor a nem látgható terület nem jelenik meg aa képernyőn.
+
+Tab ugrik mezők között, de a Label-eket kihagyja. AltTab-al labelre is lehet lépni és annak Hint vagy Message1/2 szövegét megjeleníttetni, ekkor a mező színe az aktív mező szín (mint egérnél a fölötte állás).
+
+
+Windows osztály leszármaztatásban egyre összetettebb, hogy lehessen különböző szinteket implementálni.
+
+Az egér kezelés egy interface, amit dependency injection-al csatolunk az osztályhoz. 

@@ -7,5 +7,6 @@ namespace eMeL.ConsoleWindows
 {
   public interface IArea : IRegion
   {
+    Border border { get; set; }
   }
 }

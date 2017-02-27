@@ -11,6 +11,22 @@ namespace eMeL.ConsoleWindows
 
     private char[] borderChars;
 
+    public WinColor     color { get; set; }
+
+    public const char   defaultBorderNoFrame                      = '\0';
+
+    public const string defaultBorderFrameSingle                  = "┌─┐│┘─└│";
+    public const string defaultBorderFrameDouble                  = "╔═╗║╝═╚║";
+    public const string defaultBorderFrameVertSingleHorDouble     = "╒═╕│╛═╘│";
+    public const string defaultBorderFrameVertDoubleHorSingle     = "╓─╖║╜─╙║";
+
+    public const char   defaultBorderFramePattern1                = '░';
+    public const char   defaultBorderFramePattern2                = '▒';
+    public const char   defaultBorderFramePattern3                = '▓';
+    public const char   defaultBorderFramePattern4                = '█';
+    public const char   defaultBorderFramePattern5                = '■'; 
+    public const char   defaultBorderFramePattern6                = '□';
+
 
     public char topLeft       { get { return borderChars[(int)BorderPosition.topLeft]; }      set { borderChars[(int)BorderPosition.topLeft]     = value; } }
     public char top           { get { return borderChars[(int)BorderPosition.top]; }          set { borderChars[(int)BorderPosition.top]         = value; } }
@@ -21,9 +37,10 @@ namespace eMeL.ConsoleWindows
     public char bottomLeft    { get { return borderChars[(int)BorderPosition.bottomLeft]; }   set { borderChars[(int)BorderPosition.bottomLeft]  = value; } }
     public char left          { get { return borderChars[(int)BorderPosition.left]; }         set { borderChars[(int)BorderPosition.left]        = value; } }
 
-    public Border(char allChars = (char)0)
+    public Border(char allChars = defaultBorderNoFrame, WinColor color = WinColor.None)
     {
-      borderChars = new char[numberOfBorderChars];
+      this.borderChars = new char[numberOfBorderChars];
+      this.color       = color;
 
       for (int i = 0; i < numberOfBorderChars; i++)
       {
@@ -31,18 +48,32 @@ namespace eMeL.ConsoleWindows
       }     
     }
 
-    public Border(char[] chars)
+    public Border(char[] chars, WinColor color = WinColor.None)
     {
       this.borderChars = new char[numberOfBorderChars];
+      this.color       = color;
 
-      for (int i = 0; i < numberOfBorderChars; i++)
-      {
-        this.borderChars[i] = (char)0;
-      }   
+      //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö 
 
       if ((chars != null) && (chars.Length > 0))
       {
-        for (int i = 0; i < chars.Length; i++)
+        for (int i = 0; i < Math.Max(chars.Length, numberOfBorderChars); i++)
+        {
+          this.borderChars[i] = chars[i];          
+        }
+      }
+    }
+
+    public Border(string chars, WinColor color = WinColor.None)
+    {
+      this.borderChars = new char[numberOfBorderChars];
+      this.color       = color;
+
+      //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö
+
+      if ((chars != null) && (chars.Length > 0))
+      {
+        for (int i = 0; i < Math.Max(chars.Length, numberOfBorderChars); i++)
         {
           this.borderChars[i] = chars[i];          
         }
