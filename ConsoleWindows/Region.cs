@@ -13,5 +13,14 @@ namespace eMeL.ConsoleWindows
     public int      height  { get; set; }
 
     public WinColor color   { get; set; }
+
+    public Region (int top, int left, int width, int height, WinColor color = WinColor.None)
+    {
+      this.top    = top;   
+      this.left   = left;  
+      this.width  = width; 
+      this.height = height;
+      this.color  = color; 
+    }
   }
 }

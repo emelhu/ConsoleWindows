@@ -11,7 +11,7 @@ git push -u origin master
 
 git add .
 
-git commit -m "first commit"
+git commit -m "only save commit"
 
 git push -u origin master
 
