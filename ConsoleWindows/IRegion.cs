@@ -7,11 +7,12 @@ namespace eMeL.ConsoleWindows
 {
   public interface IRegion
   {
-    int       top     { get; set; }
-    int       left    { get; set; }
-    int       width   { get; set; }
-    int       height  { get; set; }
+    int       top         { get; set; }
+    int       left        { get; set; }
+    int       width       { get; set; }
+    int       height      { get; set; }
 
-    WinColor  color   { get; set; }
+    WinColor  background  { get; set; }
+    WinColor  foreground  { get; set; }
   }
 }

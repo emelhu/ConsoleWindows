@@ -8,35 +8,61 @@ namespace eMeL.ConsoleWindows
 {
   public class ConsoleWindows
   {
-    #region private
+    #region private variables, properties
 
-    private IConsoleMouse consoleMouse;
+    private IConsoleMouse consoleMouse;    
 
-    #endregion
-
-    #region public
-
-    public Window rootWindow { get; private set; }
-
-    #endregion
-
-
-    public ConsoleWindows(string title, ConColor foreground = ConColor.Black, ConColor background = ConColor.White, IConsoleMouse consoleMouse = null)
+    public class ConsoleWindowsViewModel
     {
-      Console.Title = title;
-      Console.ForegroundColor = (ConsoleColor)(int)foreground;
-      Console.BackgroundColor = (ConsoleColor)(int)background;
+
+    }
+
+    public ConsoleWindowsViewModel viewModel { get; private set; } = new ConsoleWindowsViewModel();
+
+    #endregion
+
+    #region public variables, properties
+
+    public Window<ConsoleWindowsViewModel> rootWindow { get; private set; }
+
+    #endregion
+
+    #region constructor
+
+    public ConsoleWindows(IConsoleMouse consoleMouse = null)
+    {
       Console.InputEncoding   = Encoding.Unicode;
       Console.OutputEncoding  = Encoding.Unicode;
 
       if (consoleMouse != null)
       {
-        consoleMouse.Init(title);
+        if (String.IsNullOrWhiteSpace(Console.Title))
+        {
+          Console.Title = Guid.NewGuid().ToString();
+        }
+
+        // TODO: looking for same title and add a counter to this title is any found
+
+        consoleMouse.Init(Console.Title);
       }
 
       this.consoleMouse = consoleMouse;
 
-      Region region = new Region();
+      var area = new Area(0, 0, Console.WindowWidth, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
+
+      rootWindow = new Window<ConsoleWindowsViewModel>(viewModel, area);
+
+      this.SetDefaultLayout();                                                                    // ConsoleWindowsExtension.cs
     }
+    #endregion
+
+    #region public
+
+    public void ClearRootWindowLayout()
+    {
+
+    }
+
+    #endregion
   }
 }

@@ -6,13 +6,17 @@ using System.Threading.Tasks;
 
 namespace ConsoleWindowsDemo
 {
+  using eMeL.ConsoleWindows;
+
   public class Program
   {
     public static void Main(string[] args)
     {
-      Console.InputEncoding  = Encoding.Unicode;
-      Console.OutputEncoding = Encoding.Unicode;
-      Console.WriteLine("!#%¶«¿½ǁǀǂ˅˄˩͇Άϡ┴║╔╩╪╬▲►▼◄▒▓﴾﴿ﷺ«»§¼½¾⅓⅔⅛⅜⅝⅞←↑→↓↔↕↨│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬▀▄█▌▐░▒▓■□▪▫▬▲►▼◄◊");
+      Console.BackgroundColor = ConsoleColor.DarkBlue;
+      Console.ForegroundColor = ConsoleColor.White;
+      Console.Title           = "ConsoleWindowsDemo.exe | a demo for ConsoleWindows.dll | (c) eMeL, www.emel.hu";
+
+      var conWin  = new ConsoleWindows();
 
       Console.ReadLine();
     }
