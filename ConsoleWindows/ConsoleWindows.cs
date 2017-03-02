@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,9 +14,20 @@ namespace eMeL.ConsoleWindows
 
     private IConsoleMouse consoleMouse;    
 
-    public class ConsoleWindowsViewModel
+    public class ConsoleWindowsViewModel : IViewModel
     {
 
+      #region IViewModel implementation
+      public event ChangedEventHandler Changed;
+
+      public void IndicateChange()
+      {
+        if (Changed != null)
+        {
+          Changed(this);                                                                            // aka: Changed?.Invoke(this);
+        }
+      }
+      #endregion
     }
 
     public ConsoleWindowsViewModel viewModel { get; private set; } = new ConsoleWindowsViewModel();
@@ -33,17 +46,18 @@ namespace eMeL.ConsoleWindows
     {
       Console.InputEncoding   = Encoding.Unicode;
       Console.OutputEncoding  = Encoding.Unicode;
+      Console.SetBufferSize(Console.BufferWidth, Console.BufferHeight);
 
+      if (String.IsNullOrWhiteSpace(Console.Title))
+      {
+        var args = Environment.GetCommandLineArgs();
+        Console.Title = args[0];                                                            // or AssemblyDirectory;
+      }
+      
       if (consoleMouse != null)
       {
-        if (String.IsNullOrWhiteSpace(Console.Title))
-        {
-          Console.Title = Guid.NewGuid().ToString();
-        }
-
-        // TODO: looking for same title and add a counter to this title is any found
-
-        consoleMouse.Init(Console.Title);
+        var size = new Size() { width=Console.WindowWidth, height = Console.WindowHeight };
+        consoleMouse.Init(Console.Title, size);
       }
 
       this.consoleMouse = consoleMouse;
@@ -61,6 +75,35 @@ namespace eMeL.ConsoleWindows
     public void ClearRootWindowLayout()
     {
 
+    }
+
+    public static string AssemblyDirectory
+    {
+      get
+      {
+        string codeBase = Assembly.GetEntryAssembly().CodeBase;
+        UriBuilder uri = new UriBuilder(codeBase);
+        string path = Uri.UnescapeDataString(uri.Path);
+        return Path.GetDirectoryName(path);
+      }
+    }
+
+    #endregion
+
+    #region statics
+
+    public static ElementDescriptionInfo? GetDescription(Type type)
+    {
+      var attribute = type.GetTypeInfo().GetCustomAttribute<ElementDescriptionAttribute>();
+
+      if (attribute == null)
+      {
+        return null;
+      }
+      else
+      {
+        return attribute.description;
+      }
     }
 
     #endregion

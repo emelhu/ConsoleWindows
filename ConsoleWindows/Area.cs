@@ -5,43 +5,34 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public struct Area : IArea
+  public class Area : Region, IArea, IRegion
   {
-    public int        top         { get; set; }
-    public int        left        { get; set; }
-    public int        width       { get; set; }
-    public int        height      { get; set; }
+    private Border     _border;
+    private Scrollbars _scrollbars;
 
-    public WinColor   foreground  { get; set; }
-    public WinColor   background  { get; set; }
 
-    public Border     border      { get; set; }
-    public Scrollbars scrollbars  { get; set; }
+    public  Border      border      { get { return _border; }       set { _border     = value; IndicateChange(); } }
+    public  Scrollbars  scrollbars  { get { return _scrollbars; }   set { _scrollbars = value; IndicateChange(); } }
 
     public Area(int top, int left, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
+      : base(top, left, width, height, foreground, background)
     {
-      this.top        = top;
-      this.left       = left;
-      this.width      = width;
-      this.height     = height;
-      this.foreground = foreground;
-      this.background = background;
-
       this.border     = border     ?? new Border();
       this.scrollbars = scrollbars ?? new Scrollbars();
     }
 
     public Area(IRegion region, Border? border = null, Scrollbars? scrollbars = null)
+      : base (region)
     {
-      this.top        = region.top;
-      this.left       = region.left;
-      this.width      = region.width;
-      this.height     = region.height;
-      this.foreground = region.foreground;
-      this.background = region.background;
-
       this.border     = border     ?? new Border();
       this.scrollbars = scrollbars ?? new Scrollbars();
+    }
+
+    public Area(IArea area)
+      : base(area.top, area.left, area.width, area.height, area.foreground, area.background)
+    {
+      this.border     = area.border;
+      this.scrollbars = area.scrollbars;
     }
   }
 }
