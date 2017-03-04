@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ConsoleWindowsDemo
@@ -9,6 +8,7 @@ namespace ConsoleWindowsDemo
   using System.Diagnostics;
   using System.Threading;
   using eMeL.ConsoleWindows;
+  using eMeL.ConsoleWindows.Core;
 
   public class Program
   {
@@ -86,6 +86,8 @@ namespace ConsoleWindowsDemo
 
     public static void ViewAndCangeTest1()
     { 
+      var con = new CoreConsole("ViewAndCangeTest1");
+
       Console.BackgroundColor = ConsoleColor.DarkBlue;
       Console.ForegroundColor = ConsoleColor.White;
       Console.SetWindowSize(80, 25);

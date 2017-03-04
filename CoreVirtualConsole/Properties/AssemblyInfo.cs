@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ConsoleWindowsDemo")]
+[assembly: AssemblyProduct("CoreVirtualConsole")]
 [assembly: AssemblyTrademark("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -16,4 +16,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a29f28f9-26c5-4a28-8919-cc7a4e1cedd2")]
+[assembly: Guid("cb3540b1-0423-408a-b3b3-82bac94a60d5")]

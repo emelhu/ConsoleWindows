@@ -6,12 +6,11 @@
 
   "dependencies": {
     "ConsoleWindows": "1.0.0-*",
+    "CoreVirtualConsole": "1.0.0-*",
     "Microsoft.NETCore.App": {
       "type": "platform",
       "version": "1.0.1"
-    },
-    "System.Diagnostics.Debug": "4.3.0",
-    "System.Diagnostics.Tracer": "2.0.6"
+    }
   },
 
   "frameworks": {

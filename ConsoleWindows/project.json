@@ -3,7 +3,6 @@
 
   "dependencies": {
     "NETStandard.Library": "1.6.1",
-    "System.Console": "4.3.0",
     "System.Diagnostics.Debug": "4.3.0",
     "System.Diagnostics.StackTrace": "4.3.0",
     "System.Diagnostics.TraceSource": "4.3.0",

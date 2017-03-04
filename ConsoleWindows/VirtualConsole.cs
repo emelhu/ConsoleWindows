@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public class VirtualConsole : IDisposable
+  public abstract class VirtualConsole : IDisposable
   {
-    private MemoryStream buffer;
-    private StreamWriter writer;
-    private StreamReader reader;
-    private MemoryStream colors;
+    private   MemoryStream buffer;
+    private   StreamWriter bufferWriter;
+    protected StreamReader bufferReader;
+    private   MemoryStream colors;
+    private   BinaryWriter colorsWriter;
+    protected BinaryReader colorsReader;
 
     public  const   int   minRows =  10;
     public  const   int   maxRows = 200;
@@ -24,18 +27,21 @@ namespace eMeL.ConsoleWindows
     public  int     rows  { get; private set; }
     public  int     cols  { get; private set; }
 
-    public  ConsoleColor  foreground  { get; private set; }
-    public  ConsoleColor  background  { get; private set; }
+    public  ConColor  foreground  { get; private set; }
+    public  ConColor  background  { get; private set; }
 
-    public VirtualConsole(string  title, int rows = 25, int cols = 80, ConsoleColor foreground = ConsoleColor.Black, ConsoleColor background = ConsoleColor.White)
+    public VirtualConsole(string  title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White)
     {
       rows = Math.Min(Math.Max(rows, minRows), maxRows);
       cols = Math.Min(Math.Max(cols, minCols), maxCols);
 
-      buffer = new MemoryStream(rows * cols * sizeof(char));
-      writer = new StreamWriter(buffer);
+      buffer       = new MemoryStream(rows * cols * sizeof(char));
+      bufferWriter = new StreamWriter(buffer, Encoding.Unicode);
+      bufferReader = new StreamReader(buffer, Encoding.Unicode);
 
-      colors = new MemoryStream(rows * cols * sizeof(byte));
+      colors       = new MemoryStream(rows * cols * sizeof(byte));
+      colorsWriter = new BinaryWriter(colors);
+      colorsReader = new BinaryReader(colors);
 
       this.title      = title;
       this.rows       = rows; 
@@ -46,17 +52,9 @@ namespace eMeL.ConsoleWindows
       ConsoleInit();
     }
 
-    private void ConsoleInit()
-    {
-      Console.SetBufferSize(this.cols, this.rows);
-      Console.InputEncoding   = Encoding.Unicode;
-      Console.OutputEncoding  = Encoding.Unicode;
-      Console.ForegroundColor = this.foreground;
-      Console.BackgroundColor = this.background;
-      Console.Title           = this.title;
-    }
+    protected abstract void ConsoleInit();
 
-    public void Write(int row, int col, string text)
+    public void Write(int row, int col, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
     {
       if (text == null)
       {
@@ -82,41 +80,91 @@ namespace eMeL.ConsoleWindows
       }
 
       buffer.Position = position * sizeof(char);
-      writer.Write(text);
+      bufferWriter.Write(text);
+
+
+      if (foreground == WinColor.None)
+      {
+        foreground = (WinColor)(int)this.foreground;
+      }
+
+      if (background == WinColor.None)
+      {
+        background = (WinColor)(int)this.background;
+      }
+
+      byte colorByte = GetColorByte((ConColor)(int)foreground, (ConColor)(int)background);
 
       colors.Position = position;
-      // TODO: colors.write()
-      int dummy = 0;         // TODO
+      for (int colorByteLoop = 0; colorByteLoop < text.Length; colorByteLoop++)
+      {
+        colors.WriteByte(colorByte);
+      }
     }
 
-    public void Display()
+    protected byte GetColorByte(ConColor foreground, ConColor background)
     {
-      Console.SetCursorPosition(0, 0);
+      int ret = (int)foreground;
 
-      buffer.Position = 0;                                                    // TODO: It's a simple way only! Not the final version.
-      Console.Write(reader.ReadToEnd());
+      ret = ret << 4;                                                                             // shift bits
+
+      ret |= (int)background;                                                                     // bitwise
+
+      return (byte)ret;
     }
+
+    protected ConColor GetForegroundColor(byte colorByte)
+    {
+      int ret = colorByte;
+
+      ret = ret >> 4;   
+
+      return (ConColor)ret;
+    }
+
+    protected ConColor GetBackgroundColor(byte colorByte)
+    {
+      int ret = colorByte;
+
+      ret &= (int)0x0F;  
+
+      return (ConColor)ret;
+    }
+
+    public abstract void Display();    
 
     #region IDisposable implementation
 
     public void Dispose()
     {
-      if (writer != null)
+      if (bufferWriter != null)
       {
-        writer.Dispose();
-        writer = null;
+        bufferWriter.Dispose();
+        bufferWriter = null;
       }
 
-      if (reader != null)
+      if (bufferReader != null)
       {
-        reader.Dispose();
-        reader = null;
+        bufferReader.Dispose();
+        bufferReader = null;
       }
 
       if (buffer != null)
       {
         buffer.Dispose();
         buffer = null;
+      }
+
+      if (colorsWriter != null)
+      {
+        colorsWriter.Dispose();
+        colorsWriter = null;
+      }
+
+      if (colorsReader != null)
+      {
+        colorsReader.Dispose();
+        colorsReader = null;
       }
 
       if (colors != null)
