@@ -85,6 +85,19 @@ namespace eMeL.ConsoleWindows
         }
       }
     }
+
+    public bool isVisible()
+    {
+      for (int i = 0; i < numberOfBorderChars; i++)
+      {
+        if (this.borderChars[i] != defaultBorderNoFrame)
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
   }
 
   public enum BorderPosition

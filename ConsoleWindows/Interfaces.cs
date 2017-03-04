@@ -31,8 +31,8 @@ namespace eMeL.ConsoleWindows
 
   public interface IArea : IRegion
   {
-    Border     border     { get; set; }
-    Scrollbars scrollbars { get; set; }
+    Border?     border     { get; set; }
+    Scrollbars? scrollbars { get; set; }
   }
 
   public interface IElement : IRegion

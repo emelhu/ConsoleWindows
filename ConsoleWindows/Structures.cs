@@ -15,6 +15,12 @@ namespace eMeL.ConsoleWindows
       this.top  = top; 
       this.left = left;
     }
+
+    public Position(Position pos)
+    {
+      this.top  = pos.top; 
+      this.left = pos.left;
+    }
   }
 
   public struct Size : ISize
@@ -26,6 +32,12 @@ namespace eMeL.ConsoleWindows
     {
       this.width  = width; 
       this.height = height;
+    }
+
+    public Size(Size size)
+    {
+      this.width  = size.width; 
+      this.height = size.height;
     }
   }                     
 }

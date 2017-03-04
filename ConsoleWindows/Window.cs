@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -9,8 +10,53 @@ namespace eMeL.ConsoleWindows
   public class Window<TViewModel> : Area, IArea, IRegion, IDisposable
      where TViewModel : IViewModel
   {
+    #region data
 
-    public TViewModel viewModel   { get; private set; }
+    public  TViewModel viewModel   { get; private set; }
+
+    public  Window<IViewModel> parentWindow
+    {
+      get           { return _parentWindow; }
+
+      internal set  { _parentWindow = value; }      
+    }
+    private Window<IViewModel> _parentWindow;
+
+    public  ConsoleWindows     consoleWindows
+    {
+      get
+      {
+        if (_consoleWindows != null)                                                              // Warning: only internal field store data. (Only rootWindow's _consoleWindows contains data)
+        {
+          return _consoleWindows;
+        }
+
+        if (parentWindow != null)
+        {
+          return parentWindow.consoleWindows;                                                     // Warning: only public property can 'seek' stored data with recursive call.
+        }
+
+        return null;                                                                              // Not found
+      }
+    }
+    internal ConsoleWindows _consoleWindows { get; set; }
+
+    public bool isRootWindow
+    {
+      get
+      {
+        #if DEBUG
+        if (_consoleWindows != null)
+        {
+          Debug.Assert(_parentWindow == null);
+        }
+        #endif
+
+        return (_consoleWindows != null);
+      }
+    } 
+    
+    #endregion
 
     #region constructor
 
@@ -33,6 +79,12 @@ namespace eMeL.ConsoleWindows
       {
         throw new ArgumentException("The 'viewModel' must an IViewModel successor!", nameof(this.viewModel));
       }
+
+      state = State.Editable;                                                                     // default state
+
+      #if DEBUG
+      traceEnabled = true;
+      #endif
     }
     
     public Window(TViewModel viewModel, int top, int left, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
@@ -58,72 +110,269 @@ namespace eMeL.ConsoleWindows
       }
 
       elements.Add(element);
-                          
-      Trace.WriteLine(">> [Added]: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
+
+      if (traceEnabled)
+      {
+        Trace.WriteLine(">> [Added]: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
+      }
 
       element.Changed += new ChangedEventHandler(ChangedEvent);
+
+      var childWindow = element as Window<IViewModel>;
+
+      if (childWindow != null)
+      {
+        childWindow.parentWindow = this as Window<IViewModel>;;
+      }
       
       Refresh();
     }
     #endregion
 
+    #region refresh wait time
+
+    /// <summary>
+    /// Default value for 'refreshWaitTime' property. [milliseconds]
+    /// </summary>
+    public  static    int     defaultRefreshWaitTime
+    {
+      get { return _defaultRefreshWaitTime; }
+      set { _defaultRefreshWaitTime = RefreshWaitTimeBarrier(value); }
+    }
+    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(300);
+
+    public  const     int     minRefreshWaitTime      = 100;
+    public  const     int     maxRefreshWaitTime      = 500;
+    
+    private static    int     RefreshWaitTimeBarrier(int waitTime)
+    {
+      return Math.Min(Math.Max(waitTime, minRefreshWaitTime), maxRefreshWaitTime);
+    }
+
+    /// <summary>
+    /// The maximum length of delay, batching a package of screen refresh. [milliseconds]
+    /// </summary>
+    public            int     refreshWaitTime
+    {
+      get { return _refreshWaitTime; }
+      set { _refreshWaitTime = RefreshWaitTimeBarrier(value); }
+    }
+    private           int     _refreshWaitTime = defaultRefreshWaitTime;
+
+    #endregion
+
     #region refresh display
 
-    private const int     refreshWaitTime = 300;
-
-    private object        lockConsole     = new object();
-
-    private volatile bool refreshWait     = false;   
-    private volatile int  lastRefresh     = 0;
-    private volatile int  lastChange      = 0;
+    private volatile  bool    refreshWait     = false;   
+    private volatile  int     lastRefresh     = 0;
+    private volatile  int     lastChange      = 0;
 
     public void Refresh()
     {
       lastChange = Environment.TickCount;
 
-      if (refreshWait)
+      if (isVisible)
       {
-        Trace.WriteLine(">> *wait* : " + lastChange.ToString());
-      }
-      else
-      {
-        refreshWait = true;
+        bool dropRequest = refreshWait;
 
-        Task.Run(() => 
-          {           
-            Thread.Sleep(refreshWaitTime);
-           
-            refreshWait = false;
+        if (! dropRequest)
+        {
+          Window<IViewModel> seeker = this.parentWindow;
 
-            Display();     
-          });
+          while (seeker != null)
+          {
+            if (seeker.refreshWait || ! seeker.isVisible)
+            {
+              dropRequest = true;
+              break;
+            }
+
+            seeker = seeker.parentWindow;
+          }
+        }
+
+
+        if (dropRequest)
+        { // This refresh request will dropped because a previous refresh request will call Display() 
+          if (traceEnabled)
+          {
+            Trace.WriteLine(">> *wait* : " + lastChange.ToString());
+          }
+        }
+        else
+        {
+          refreshWait = true;                                                                       // Signal for thereafter Refresh requests. [to be notified Display() will call]
+
+          Task.Run(() =>
+            {
+              Thread.Sleep(refreshWaitTime);                                                        // Batch requests and all request (in interval) will exequted one time (with one Display() call)
+
+              refreshWait = false;
+
+              Display();
+            });
+        }
       }
     }
 
     private void ChangedEvent(object source)
     {
-      Trace.WriteLine(">> Changed: " + Environment.TickCount.ToString() + " | " + source.GetType().ToString());
+      if (traceEnabled)
+      {
+        Trace.WriteLine(">> Changed: " + Environment.TickCount.ToString() + " | " + source.GetType().ToString());
+      }
 
       Refresh();
     }
 
     public void Display()
     {
-      lock (lockConsole)
+      if (isVisible)
       {
-        if (lastChange > lastRefresh)
+        lock (ConsoleWindows.lockConsole)                                                           // Centralized lock for all windows
         {
-          lastRefresh = Environment.TickCount;                                                    // start time of refresh
+          if (lastChange > lastRefresh)
+          {
+            lastRefresh = Environment.TickCount;                                                    // start time of refresh
 
-          Trace.WriteLine(">> Display: " + lastRefresh.ToString());
+            if (traceEnabled)
+            {
+              Trace.WriteLine(">> Display: " + lastRefresh.ToString());
+            }
 
-
-
-          Console.WriteLine("Display: " + lastRefresh.ToString());          
-          Task.Delay(100);  // simulate display process
+            InternalDisplay();
+          }
         }
       }
     }
+
+    private void InternalDisplay()
+    {
+      InternalDisplayPart(new DisplayConsolePartInfo(this));                               // Display window's IArea
+
+      var orderedElements = GetDisplayOrderedElements();
+
+      foreach (var element in orderedElements)
+      {
+        var childWindow = element as Window<IViewModel>;
+
+        if (childWindow != null)
+        {
+          if (childWindow.isVisible)
+          {
+            InternalDisplayPart(new DisplayConsolePartInfo(childWindow));                  // Display window's IArea
+
+            childWindow.InternalDisplay();
+          }
+        }
+        else
+        {
+          InternalDisplayPart(new DisplayConsolePartInfo(element));
+        }
+      }
+    }
+
+    private void InternalDisplayPart(DisplayConsolePartInfo partInfo)
+    {
+      int dummy; // TODO
+
+      partInfo.width  += Math.Max(partInfo.width,  (this.width  - partInfo.left));  // TODO: this.width  must correction with Border+Scrollbar
+      partInfo.height += Math.Max(partInfo.height, (this.height - partInfo.top));   // TODO: this.height must correction with Border+Scrollbar
+
+      partInfo.top    += this.top;
+      partInfo.left   += this.left;
+
+      if (partInfo.background == WinColor.None)
+      {
+        partInfo.background = this.background;
+      }
+
+      if (partInfo.foreground == WinColor.None)
+      {
+        partInfo.foreground = this.foreground;
+      }
+
+      if (isRootWindow)
+      {
+        this.consoleWindows.DisplayPart(partInfo);
+      }
+      else if (parentWindow != null)
+      {
+        parentWindow.InternalDisplayPart(partInfo);                                        // recursion: position&size correction to the root. 
+      } 
+    }
+
+    private IRegion[] GetDisplayOrderedElements()
+    {
+      IRegion[] orderedElements = elements.OrderBy(x => (x.top * 1000000) + x.left).ToArray();
+
+      return orderedElements;
+    }    
+    #endregion
+
+    #region usage/visibility/editable
+
+    public enum State
+    {
+      Hide      = 0,
+      ReadOnly  = 1,
+      Editable  = 2
+    }
+
+    public State state
+    {
+      get { return _state; }
+      set { _state = value; ProceedFirstField(); }
+    }
+    private State _state;
+
+    public  bool  isVisible
+    {
+      get
+      {
+        if (state == State.Hide)                                                                  
+        {
+          return false;
+        }
+
+        if (parentWindow == null)
+        {
+          if (isRootWindow)
+          {
+            return (state != State.Hide);
+          }
+
+          return false;                                                                           // Orphan window, haven't a valid root window
+        }
+        else
+        {
+          return parentWindow.isVisible;                                                          // Warning: recursive call, because not visible if any(!) hidden in link list.
+        }
+      }
+    }
+
+    #endregion    
+
+    #region field step / proceed
+
+    public void ProceedFirstField()
+    {
+      if (state == State.Editable)
+      { // Appoint first field of window.
+
+      }
+    }
+
+    public void ProceedField(bool next = true)
+    {
+
+    }
+
+    public void ProceedLastField()
+    {
+
+    }
+
     #endregion
 
     #region IDisposable implementation
@@ -147,6 +396,13 @@ namespace eMeL.ConsoleWindows
           foreach (var element in elements)
           {
             element.Changed -= new ChangedEventHandler(ChangedEvent);
+
+            var childWindow = element as Window<IViewModel>;
+
+            if (childWindow != null)
+            {
+              childWindow.parentWindow = null;
+            }
           }
 
           elements = null;
@@ -165,6 +421,12 @@ namespace eMeL.ConsoleWindows
     {
       Dispose(true);
     }
-    #endregion    
+    #endregion
+
+    #region others
+
+    public static bool traceEnabled = false;
+
+    #endregion
   }
 }

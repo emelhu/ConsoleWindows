@@ -62,6 +62,21 @@ namespace eMeL.ConsoleWindows
         }
       }
     }
+
+    public bool isVisible()
+    {
+      const char noScrollbarChar = '\0';
+
+      for (int i = 0; i < numberOfScrollbarsChars; i++)
+      {
+        if (this.scrollbarsChars[i] != noScrollbarChar)
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
   }
 
   public enum ScrollbarsPosition
