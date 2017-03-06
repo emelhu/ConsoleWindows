@@ -57,10 +57,21 @@ namespace ConsoleWindowsDemo
 
       switch (operation)
       {
-        case 'V':                                                                       // Minden tétel betöltése
+        case 'V':                                                                        
         case 'v':
           ViewAndCangeTest1();
-          break;        
+          break;      
+          
+            
+        case 'B':                                                                        
+        case 'b':
+          BorderAndAreaTest1();
+          break;     
+
+        case 'T':                                                                        
+        case 't':
+          SimpleTest1();
+          break;   
 
         default:        
           Console.WriteLine("!!!! Operation code error !!!!");
@@ -79,22 +90,95 @@ namespace ConsoleWindowsDemo
         Console.WriteLine("  Operation codes and meaning:");
       }
 
+      Console.WriteLine("  'B' : Border and Area test.");
       Console.WriteLine("  'V' : View and change test.");
-      Console.WriteLine("  '.' : ....");
-      Console.WriteLine("  '.' : ....");      
+      Console.WriteLine("  'T' : A simple test.");
     }    
 
-    public static void ViewAndCangeTest1()
-    { 
-      var con = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
-
-      Console.BackgroundColor = ConsoleColor.DarkBlue;
-      Console.ForegroundColor = ConsoleColor.White;
-      Console.SetWindowSize(80, 25);
-
+    public static void SimpleTest1()
+    {
       TextElement.defaultBackground = WinColor.DarkGray;
       TextElement.defaultForeground = WinColor.Gray;
 
+      var con    = new CoreConsole("SimpleTest1 --- ConsoleWindowsDemo");
+      var conWin = new ConsoleWindows(con);
+
+      var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
+      var textElement = new TextElement(0, 0, String.Join("", textArray));  
+      conWin.rootWindow.AddElement(textElement);
+
+      textElement = new TextElement(1, 0, "1");  
+      conWin.rootWindow.AddElement(textElement);    
+
+      textElement = new TextElement(2, 0, "2");  
+      conWin.rootWindow.AddElement(textElement);    
+
+      ConsoleKeyInfo keyInfo;
+
+      do
+      { 
+        if (Console.KeyAvailable)
+        {
+          keyInfo = Console.ReadKey();
+        }
+        else
+        {
+          Thread.Sleep(100);
+        }
+      } while (keyInfo.Key != ConsoleKey.Escape);
+    }
+
+    public static void BorderAndAreaTest1()
+    {
+      TextElement.defaultBackground = WinColor.DarkGray;
+      TextElement.defaultForeground = WinColor.Gray;
+
+      var con    = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo");
+      var conWin = new ConsoleWindows(con);
+
+      var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
+      var textElement = new TextElement(0, 0, String.Join("", textArray));  
+      conWin.rootWindow.AddElement(textElement);
+
+      for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
+      {
+        textElement = new TextElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        conWin.rootWindow.AddElement(textElement);
+      }
+
+      var region = new Region(3, 3, 3, 3, WinColor.Cyan,    WinColor.Green);
+      var area   = new Area(  6, 6, 6, 6, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFrameSingle));
+
+      conWin.rootWindow.AddElement(region);
+      conWin.rootWindow.AddElement(area);
+
+      conWin.rootWindow.AddElement(new TextElement(20, 4, "...press Escape to end..."));
+
+      //
+
+      Console.SetCursorPosition(12, 40);
+
+      ConsoleKeyInfo keyInfo;
+
+      do
+      { 
+        if (Console.KeyAvailable)
+        {
+          keyInfo = Console.ReadKey();
+        }
+        else
+        {
+          Thread.Sleep(100);
+        }
+      } while (keyInfo.Key != ConsoleKey.Escape);
+    }
+
+    public static void ViewAndCangeTest1()
+    { 
+      TextElement.defaultBackground = WinColor.DarkGray;
+      TextElement.defaultForeground = WinColor.Gray;
+
+      var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
       var conWin = new ConsoleWindows(con);
 
       var region = new Region(3, 10, 10, 10, WinColor.Cyan, WinColor.Green);

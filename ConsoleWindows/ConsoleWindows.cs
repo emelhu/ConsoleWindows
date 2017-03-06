@@ -36,6 +36,9 @@ namespace eMeL.ConsoleWindows
     public Window<ConsoleWindowsViewModel>  rootWindow      { get; private set; }
     public VirtualConsole                   virtualConsole  { get; private set; }
 
+    public int rows { get { return virtualConsole.rows; } }
+    public int cols { get { return virtualConsole.cols; } }
+
     #endregion
 
     #region constructor

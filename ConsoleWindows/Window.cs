@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define USE_refreshWaitTime
+
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -201,6 +203,7 @@ namespace eMeL.ConsoleWindows
         }
         else
         {
+          #if USE_refreshWaitTime
           refreshWait = true;                                                                       // Signal for thereafter Refresh requests. [to be notified Display() will call]
 
           Task.Run(() =>
@@ -211,6 +214,10 @@ namespace eMeL.ConsoleWindows
 
               Display();
             });
+          #else
+          refreshWait = false;
+          Display();
+          #endif          
         }
       }
     }
@@ -313,9 +320,9 @@ namespace eMeL.ConsoleWindows
 
       return orderedElements;
     }    
-    #endregion
+#endregion
 
-    #region usage/visibility/editable
+#region usage/visibility/editable
 
     public enum State
     {
@@ -356,9 +363,9 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    #endregion    
+#endregion
 
-    #region field step / proceed
+#region field step / proceed
 
     public void ProceedFirstField()
     {
@@ -378,9 +385,9 @@ namespace eMeL.ConsoleWindows
 
     }
 
-    #endregion
+#endregion
 
-    #region IDisposable implementation
+#region IDisposable implementation
 
     private bool disposedValue = false;                                                           // To detect redundant calls
 
@@ -426,12 +433,12 @@ namespace eMeL.ConsoleWindows
     {
       Dispose(true);
     }
-    #endregion
+#endregion
 
-    #region others
+#region others
 
     public static bool traceEnabled = false;
 
-    #endregion
+#endregion
   }
 }

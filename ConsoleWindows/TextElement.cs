@@ -33,8 +33,8 @@ namespace eMeL.ConsoleWindows
     }
 
 
-    public TextElement (int top, int left, int width, int height = 1, WinColor foreground = WinColor.None, WinColor background = WinColor.None, string text = null)
-      : base(top, left, width, height, foreground, background)
+    public TextElement (int row, int col, int width, int height = 1, WinColor foreground = WinColor.None, WinColor background = WinColor.None, string text = null)
+      : base(row, col, width, height, foreground, background)
     {
       this.text = text;
 
@@ -57,8 +57,8 @@ namespace eMeL.ConsoleWindows
       Normalize();
     }
 
-    public TextElement (int top, int left, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
-      : base(top, left, (String.IsNullOrEmpty(text) ? 1 : text.Length), 1, foreground, background)
+    public TextElement (int row, int col, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+      : base(row, col, (String.IsNullOrEmpty(text) ? 1 : text.Length), 1, foreground, background)
     {
       this.text = text;
 
@@ -73,16 +73,16 @@ namespace eMeL.ConsoleWindows
       Normalize();
     }
 
-    public TextElement (int top, int left, int width, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
-      : base(top, left, width, 1, foreground, background)
+    public TextElement (int row, int col, int width, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+      : base(row, col, width, 1, foreground, background)
     {
       this.text = text;
 
       Normalize();
     }
 
-    public TextElement (int top, int left, int width, int height, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
-      : base(top, left, width, height, foreground, background)
+    public TextElement (int row, int col, int width, int height, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+      : base(row, col, width, height, foreground, background)
     {
       this.text = text;
 

@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define USE_refreshWaitTime
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -171,7 +173,16 @@ namespace eMeL.ConsoleWindows
     }
     #endregion
 
-    #region Read data
+    #region keyboard
+
+    public void Start()
+    {
+
+    }
+
+    #endregion
+
+    #region abstract Display
 
     protected char[] GetDispChars(int pos, int len)
     {
@@ -195,6 +206,8 @@ namespace eMeL.ConsoleWindows
       return colors[pos];
     }
 
+    public abstract void Display();    
+
     #endregion
 
     #region refresh display
@@ -209,6 +222,7 @@ namespace eMeL.ConsoleWindows
 
       if (! refreshWait)
       {
+        #if USE_refreshWaitTime
         if (traceEnabled)
         {
           Trace.WriteLine(">> VirtualConsole.Refresh: [! refreshWait] " + lastChange.ToString());
@@ -224,6 +238,10 @@ namespace eMeL.ConsoleWindows
 
             InternalDisplay();
           });
+        #else
+        refreshWait = false;
+        InternalDisplay();
+        #endif      
       }
     }
 
@@ -247,8 +265,6 @@ namespace eMeL.ConsoleWindows
       }
     }
     #endregion
-
-    public abstract void Display();    
 
     #region others
 
