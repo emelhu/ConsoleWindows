@@ -86,7 +86,7 @@ namespace ConsoleWindowsDemo
 
     public static void ViewAndCangeTest1()
     { 
-      var con = new CoreConsole("ViewAndCangeTest1");
+      var con = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
 
       Console.BackgroundColor = ConsoleColor.DarkBlue;
       Console.ForegroundColor = ConsoleColor.White;
@@ -95,7 +95,7 @@ namespace ConsoleWindowsDemo
       TextElement.defaultBackground = WinColor.DarkGray;
       TextElement.defaultForeground = WinColor.Gray;
 
-      var conWin = new ConsoleWindows();
+      var conWin = new ConsoleWindows(con);
 
       var region = new Region(3, 10, 10, 10, WinColor.Cyan, WinColor.Green);
       var area   = new Area(  6, 20, 10, 15, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFramePattern1));
@@ -117,7 +117,7 @@ namespace ConsoleWindowsDemo
       conWin.rootWindow.AddElement(textElement3);
       
 
-      region.top += 5;
+      region.row += 5;
       area.border = new Border(Border.defaultBorderFramePattern2);
 
       Thread.Sleep(3000);
@@ -133,7 +133,7 @@ namespace ConsoleWindowsDemo
       //
 
       int count = 0;
-      ConsoleKeyInfo key;
+      ConsoleKeyInfo keyInfo;
 
       do
       { 
@@ -141,7 +141,7 @@ namespace ConsoleWindowsDemo
         
         if (Console.KeyAvailable)
         {
-          key = Console.ReadKey();
+          keyInfo = Console.ReadKey();
         }
         else
         {
@@ -149,7 +149,7 @@ namespace ConsoleWindowsDemo
 
           textElement4.text = (++count).ToString();
         }
-      } while (key.Key != ConsoleKey.Escape);
+      } while (keyInfo.Key != ConsoleKey.Escape);
     }
   }
 }

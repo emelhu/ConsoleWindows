@@ -61,17 +61,17 @@ namespace eMeL.ConsoleWindows
     #region constructor
 
     public Window(TViewModel viewModel, IRegion region, Border? border = null, Scrollbars? scrollbars = null)
-      : this(viewModel, region.top, region.left, region.width, region.height, region.foreground, region.background, border, scrollbars)
+      : this(viewModel, region.row, region.col, region.width, region.height, region.foreground, region.background, border, scrollbars)
     {
     }
 
     public Window(TViewModel viewModel, IArea area)
-      : this(viewModel, area.top, area.left, area.width, area.height, area.foreground, area.background, area.border, area.scrollbars)
+      : this(viewModel, area.row, area.col, area.width, area.height, area.foreground, area.background, area.border, area.scrollbars)
     {
     }
 
-    public Window(TViewModel viewModel, int top, int left, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
-      : base (top, left, width, height, foreground, background, border, scrollbars)
+    public Window(TViewModel viewModel, int row, int col, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
+      : base (row, col, width, height, foreground, background, border, scrollbars)
     {  
       this.viewModel = viewModel;    
 
@@ -87,8 +87,8 @@ namespace eMeL.ConsoleWindows
       #endif
     }
     
-    public Window(TViewModel viewModel, int top, int left, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
-      : this(viewModel, top, left, width, height, foreground, background, border, scrollbars)
+    public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+      : this(viewModel, row, col, width, height, foreground, background, border, scrollbars)
     {
     }
 
@@ -113,7 +113,7 @@ namespace eMeL.ConsoleWindows
 
       if (traceEnabled)
       {
-        Trace.WriteLine(">> [Added]: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
+        Trace.WriteLine(">> Window.AddElement: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
       }
 
       element.Changed += new ChangedEventHandler(ChangedEvent);
@@ -139,7 +139,7 @@ namespace eMeL.ConsoleWindows
       get { return _defaultRefreshWaitTime; }
       set { _defaultRefreshWaitTime = RefreshWaitTimeBarrier(value); }
     }
-    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(300);
+    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(200);
 
     public  const     int     minRefreshWaitTime      = 100;
     public  const     int     maxRefreshWaitTime      = 500;
@@ -196,7 +196,7 @@ namespace eMeL.ConsoleWindows
         { // This refresh request will dropped because a previous refresh request will call Display() 
           if (traceEnabled)
           {
-            Trace.WriteLine(">> *wait* : " + lastChange.ToString());
+            Trace.WriteLine(">> Window.Refresh()/dropRequest: " + lastChange.ToString());
           }
         }
         else
@@ -219,7 +219,7 @@ namespace eMeL.ConsoleWindows
     {
       if (traceEnabled)
       {
-        Trace.WriteLine(">> Changed: " + Environment.TickCount.ToString() + " | " + source.GetType().ToString());
+        Trace.WriteLine(">> Window.ChangedEvent(): " + Environment.TickCount.ToString() + " | " + source.GetType().ToString());
       }
 
       Refresh();
@@ -237,7 +237,7 @@ namespace eMeL.ConsoleWindows
 
             if (traceEnabled)
             {
-              Trace.WriteLine(">> Display: " + lastRefresh.ToString());
+              Trace.WriteLine(">> Window.Display(): " + lastRefresh.ToString());
             }
 
             InternalDisplay();
@@ -248,7 +248,9 @@ namespace eMeL.ConsoleWindows
 
     private void InternalDisplay()
     {
-      InternalDisplayPart(new DisplayConsolePartInfo(this));                               // Display window's IArea
+      var dp = new DisplayConsolePartInfo(this);
+
+      InternalDisplayPart(ref dp);                                                                // Display window's IArea
 
       var orderedElements = GetDisplayOrderedElements();
 
@@ -260,27 +262,30 @@ namespace eMeL.ConsoleWindows
         {
           if (childWindow.isVisible)
           {
-            InternalDisplayPart(new DisplayConsolePartInfo(childWindow));                  // Display window's IArea
+            var dp2 = new DisplayConsolePartInfo(childWindow);
+
+            InternalDisplayPart(ref dp2);                                                          // Display window's IArea
 
             childWindow.InternalDisplay();
           }
         }
         else
         {
-          InternalDisplayPart(new DisplayConsolePartInfo(element));
+          var dp3 = new DisplayConsolePartInfo(element);
+          InternalDisplayPart(ref dp3);
         }
       }
     }
 
-    private void InternalDisplayPart(DisplayConsolePartInfo partInfo)
+    private void InternalDisplayPart(ref DisplayConsolePartInfo partInfo)
     {
       int dummy; // TODO
 
-      partInfo.width  += Math.Max(partInfo.width,  (this.width  - partInfo.left));  // TODO: this.width  must correction with Border+Scrollbar
-      partInfo.height += Math.Max(partInfo.height, (this.height - partInfo.top));   // TODO: this.height must correction with Border+Scrollbar
+      partInfo.width  = Math.Max(partInfo.width,  (this.width  - partInfo.col));   // TODO: this.width  must correction with Border+Scrollbar
+      partInfo.height = Math.Max(partInfo.height, (this.height - partInfo.row));   // TODO: this.height must correction with Border+Scrollbar
 
-      partInfo.top    += this.top;
-      partInfo.left   += this.left;
+      partInfo.row    += this.row;
+      partInfo.col    += this.col;
 
       if (partInfo.background == WinColor.None)
       {
@@ -294,17 +299,17 @@ namespace eMeL.ConsoleWindows
 
       if (isRootWindow)
       {
-        this.consoleWindows.DisplayPart(partInfo);
+        this.consoleWindows.DisplayPart(ref partInfo);
       }
       else if (parentWindow != null)
       {
-        parentWindow.InternalDisplayPart(partInfo);                                        // recursion: position&size correction to the root. 
+        parentWindow.InternalDisplayPart(ref partInfo);                                        // recursion: position&size correction to the root. 
       } 
     }
 
     private IRegion[] GetDisplayOrderedElements()
     {
-      IRegion[] orderedElements = elements.OrderBy(x => (x.top * 1000000) + x.left).ToArray();
+      IRegion[] orderedElements = elements.OrderBy(x => (x.row * 1000000) + x.col).ToArray();
 
       return orderedElements;
     }    

@@ -9,8 +9,8 @@ namespace eMeL.ConsoleWindows
 
   public interface IPosition
   {
-    int       top         { get; set; }
-    int       left        { get; set; }
+    int       row         { get; set; }
+    int       col         { get; set; }
   }
 
   public interface ISize
@@ -49,7 +49,7 @@ namespace eMeL.ConsoleWindows
 
   public interface IConsoleMouse
   { // http://stackoverflow.com/questions/5241984/findwindowex-from-user32-dll-is-returning-a-handle-of-zero-and-error-code-of-127
-    void Init(string title, ISize size);
+    void Init(VirtualConsole virtualConsole);
 
     IPosition Clicked();
   }

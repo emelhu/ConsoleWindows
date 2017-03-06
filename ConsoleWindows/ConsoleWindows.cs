@@ -12,15 +12,6 @@ namespace eMeL.ConsoleWindows
   {
     #region private variables, properties
 
-    #region Console saved start state
-
-    public ConsoleColor  consoleStartBackground  { get; private set; }
-    public ConsoleColor  consoleStartForeground  { get; private set; }
-
-    #endregion
-
-    private IConsoleMouse consoleMouse;    
-
     public class ConsoleWindowsViewModel : IViewModel
     {
       #region IViewModel implementation
@@ -42,37 +33,24 @@ namespace eMeL.ConsoleWindows
 
     #region public variables, properties
 
-    public Window<ConsoleWindowsViewModel> rootWindow { get; private set; }
+    public Window<ConsoleWindowsViewModel>  rootWindow      { get; private set; }
+    public VirtualConsole                   virtualConsole  { get; private set; }
 
     #endregion
 
     #region constructor
 
-    public ConsoleWindows(IConsoleMouse consoleMouse = null)
+    public ConsoleWindows(VirtualConsole virtualConsole)
     {
-      Console.SetBufferSize(Console.BufferWidth, Console.BufferHeight);
-
-      Console.InputEncoding   = Encoding.Unicode;
-      Console.OutputEncoding  = Encoding.Unicode;
-      
-      consoleStartBackground  = Console.BackgroundColor;
-      consoleStartForeground  = Console.ForegroundColor;
-
       if (String.IsNullOrWhiteSpace(Console.Title))
       {
         var args = Environment.GetCommandLineArgs();
-        Console.Title = args[0];                                                            // or AssemblyDirectory;
-      }
+        Console.Title = args[0];                                                                  // or AssemblyDirectory;
+      }   
       
-      if (consoleMouse != null)
-      {
-        var size = new Size() { width=Console.WindowWidth, height = Console.WindowHeight };
-        consoleMouse.Init(Console.Title, size);
-      }
+      this.virtualConsole = virtualConsole;     
 
-      this.consoleMouse = consoleMouse;
-
-      var area = new Area(0, 0, Console.WindowWidth, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
+      var area = new Area(0, 0, virtualConsole.cols, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
 
       rootWindow = new Window<ConsoleWindowsViewModel>(viewModel, area);
 
@@ -123,61 +101,40 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    internal void DisplayPart(DisplayConsolePartInfo partInfo)
+    internal void DisplayPart(ref DisplayConsolePartInfo partInfo)
     {
       if ((partInfo.width < 1) || (partInfo.height < 1))
       {
         return;                                                                                   // there is no work to do                                                                     
       }
-
-      if (partInfo.background == WinColor.None)
-      {
-        Console.BackgroundColor = this.consoleStartBackground;
-      }
-      else
-      {
-        Console.BackgroundColor = (ConsoleColor)(int)partInfo.background;
-      }
-
-      if (partInfo.foreground == WinColor.None)
-      {
-        Console.BackgroundColor = this.consoleStartForeground;
-      }
-      else
-      {
-        Console.BackgroundColor = (ConsoleColor)(int)partInfo.foreground;
-      }
-
+    
       if (partInfo.displayText == null)
       { // Only paint area by space
         var text = new string(' ', partInfo.width);
 
-        for (int row = 0; row < partInfo.height; row++)
+        for (int rowLoop = 0; rowLoop < partInfo.height; rowLoop++)
         {
-          Console.SetCursorPosition(partInfo.left, partInfo.top + row);
-          Console.Write(text);
+          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, text, partInfo.foreground, partInfo.background);
         }
       }
       else if (partInfo.height == 1)
       { // Only one line
-        Console.SetCursorPosition(partInfo.left, partInfo.top);
-        Console.Write(FormattedDisplayText(partInfo.displayText, partInfo.width));
+        this.virtualConsole.Write(partInfo.row, partInfo.col, FormattedDisplayText(partInfo.displayText, partInfo.width), partInfo.foreground, partInfo.background);
       }
       else
       { // multiple line
         var lines = partInfo.displayText.Split('\n');
 
-        for (int row = 0; row < partInfo.height; row++)
+        for (int rowLoop = 0; rowLoop < partInfo.height; rowLoop++)
         {
           string text = null;
 
-          if (row < lines.Length)
+          if (rowLoop < lines.Length)
           {
-            text = lines[row];
+            text = lines[rowLoop];
           }
 
-          Console.SetCursorPosition(partInfo.left, partInfo.top + row);
-          Console.Write(FormattedDisplayText(text, partInfo.width));
+          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, FormattedDisplayText(text, partInfo.width), partInfo.foreground, partInfo.background);
         }
       }
     }

@@ -4,44 +4,74 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public abstract class VirtualConsole : IDisposable
+  public abstract class VirtualConsole
   {
-    private   MemoryStream buffer;
-    private   StreamWriter bufferWriter;
-    protected StreamReader bufferReader;
-    private   MemoryStream colors;
-    private   BinaryWriter colorsWriter;
-    protected BinaryReader colorsReader;
+    #region variables
+
+    private char[]  buffer;
+    private byte[]  colors;
 
     public  const   int   minRows =  10;
     public  const   int   maxRows = 200;
     public  const   int   minCols =  10;
     public  const   int   maxCols = 400;
 
-    public  string  title { get; private set; }
+    public  string  title { get; protected set; }
 
     public  int     rows  { get; private set; }
     public  int     cols  { get; private set; }
 
     public  ConColor  foreground  { get; private set; }
     public  ConColor  background  { get; private set; }
+    #endregion
 
-    public VirtualConsole(string  title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White)
+    #region refresh wait time
+
+    /// <summary>
+    /// Default value for 'refreshWaitTime' property. [milliseconds]
+    /// </summary>
+    public  static    int     defaultRefreshWaitTime
     {
-      rows = Math.Min(Math.Max(rows, minRows), maxRows);
-      cols = Math.Min(Math.Max(cols, minCols), maxCols);
+      get { return _defaultRefreshWaitTime; }
+      set { _defaultRefreshWaitTime = RefreshWaitTimeBarrier(value); }
+    }
+    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(200);
 
-      buffer       = new MemoryStream(rows * cols * sizeof(char));
-      bufferWriter = new StreamWriter(buffer, Encoding.Unicode);
-      bufferReader = new StreamReader(buffer, Encoding.Unicode);
+    public  const     int     minRefreshWaitTime      = 100;
+    public  const     int     maxRefreshWaitTime      = 500;
+    
+    private static    int     RefreshWaitTimeBarrier(int waitTime)
+    {
+      return Math.Min(Math.Max(waitTime, minRefreshWaitTime), maxRefreshWaitTime);
+    }
 
-      colors       = new MemoryStream(rows * cols * sizeof(byte));
-      colorsWriter = new BinaryWriter(colors);
-      colorsReader = new BinaryReader(colors);
+    /// <summary>
+    /// The maximum length of delay, batching a package of screen refresh. [milliseconds]
+    /// </summary>
+    public            int     refreshWaitTime
+    {
+      get { return _refreshWaitTime; }
+      set { _refreshWaitTime = RefreshWaitTimeBarrier(value); }
+    }
+    private           int     _refreshWaitTime = defaultRefreshWaitTime;
+
+    #endregion
+
+    #region constructor
+
+    public VirtualConsole(string  title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White, IConsoleMouse consoleMouse = null)
+    {
+      rows    = Math.Min(Math.Max(rows, minRows), maxRows);
+      cols    = Math.Min(Math.Max(cols, minCols), maxCols);
+
+      var cb  = GetColorByte(foreground, background);
+      buffer  = Enumerable.Repeat(' ', rows * cols).ToArray();
+      colors  = Enumerable.Repeat(cb,  rows * cols).ToArray();
 
       this.title      = title;
       this.rows       = rows; 
@@ -50,9 +80,21 @@ namespace eMeL.ConsoleWindows
       this.background = background;
 
       ConsoleInit();
+
+      if (consoleMouse != null)
+      {
+        consoleMouse.Init(this);
+      }
+
+      #if DEBUG
+      traceEnabled = true;
+      #endif
     }
 
     protected abstract void ConsoleInit();
+    #endregion
+
+    #region Write
 
     public void Write(int row, int col, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
     {
@@ -79,9 +121,7 @@ namespace eMeL.ConsoleWindows
         text = text.Substring(0, maxLen);
       }
 
-      buffer.Position = position * sizeof(char);
-      bufferWriter.Write(text);
-
+      Array.Copy(text.ToArray(), 0, buffer, position, text.Length);
 
       if (foreground == WinColor.None)
       {
@@ -93,13 +133,12 @@ namespace eMeL.ConsoleWindows
         background = (WinColor)(int)this.background;
       }
 
-      byte colorByte = GetColorByte((ConColor)(int)foreground, (ConColor)(int)background);
+      byte colorByte  = GetColorByte((ConColor)(int)foreground, (ConColor)(int)background);
+      var  colorBytes = Enumerable.Repeat(colorByte, maxLen).ToArray();
 
-      colors.Position = position;
-      for (int colorByteLoop = 0; colorByteLoop < text.Length; colorByteLoop++)
-      {
-        colors.WriteByte(colorByte);
-      }
+      Array.Copy(colorBytes, 0, colors, position, text.Length);
+
+      Refresh();
     }
 
     protected byte GetColorByte(ConColor foreground, ConColor background)
@@ -130,54 +169,91 @@ namespace eMeL.ConsoleWindows
 
       return (ConColor)ret;
     }
+    #endregion
 
-    public abstract void Display();    
+    #region Read data
 
-    #region IDisposable implementation
-
-    public void Dispose()
+    protected char[] GetDispChars(int pos, int len)
     {
-      if (bufferWriter != null)
-      {
-        bufferWriter.Dispose();
-        bufferWriter = null;
-      }
+      Debug.Assert(pos >= 0);
+      Debug.Assert(len >  0);
+      Debug.Assert(pos         < this.rows * this.cols);
+      Debug.Assert((pos + len) < this.rows * this.cols);
 
-      if (bufferReader != null)
-      {
-        bufferReader.Dispose();
-        bufferReader = null;
-      }
+      var part = new char[len];
 
-      if (buffer != null)
-      {
-        buffer.Dispose();
-        buffer = null;
-      }
+      Array.Copy(buffer, pos, part, 0, len);
 
-      if (colorsWriter != null)
-      {
-        colorsWriter.Dispose();
-        colorsWriter = null;
-      }
+      return part;
+    }
 
-      if (colorsReader != null)
-      {
-        colorsReader.Dispose();
-        colorsReader = null;
-      }
+    protected byte   GetColorByte(int pos)
+    {
+      Debug.Assert(pos >= 0);
+      Debug.Assert(pos < this.rows * this.cols);
 
-      if (colors != null)
+      return colors[pos];
+    }
+
+    #endregion
+
+    #region refresh display
+
+    private volatile  bool    refreshWait     = false;   
+    private volatile  int     lastRefresh     = 0;
+    private volatile  int     lastChange      = 0;
+
+    public void Refresh()
+    {
+      lastChange = Environment.TickCount;
+
+      if (! refreshWait)
       {
-        colors.Dispose();
-        colors = null;
+        if (traceEnabled)
+        {
+          Trace.WriteLine(">> VirtualConsole.Refresh: [! refreshWait] " + lastChange.ToString());
+        }
+
+        refreshWait = true;                                                                       // Signal for thereafter Refresh requests. [to be notified Display() will call]
+
+        Task.Run(() =>
+          {
+            Thread.Sleep(refreshWaitTime);                                                        // Batch requests and all request (in interval) will exequted one time (with one Display() call)
+
+            refreshWait = false;
+
+            InternalDisplay();
+          });
       }
     }
 
-    ~VirtualConsole()
+    private object lockConsole = new object();
+
+    private void InternalDisplay()
     {
-      Dispose();
-    }    
+      lock (this.lockConsole)                                                                     // Centralized lock for all windows
+      {
+        if (lastChange > lastRefresh)
+        {
+          lastRefresh = Environment.TickCount;                                                    // start time of refresh
+
+          if (traceEnabled)
+          {
+            Trace.WriteLine(">> VirtualConsole.InternalDisplay: " + lastRefresh.ToString());
+          }
+
+          Display();
+        }
+      }
+    }
+    #endregion
+
+    public abstract void Display();    
+
+    #region others
+
+    public static bool traceEnabled = false;
+
     #endregion
   }
 }

@@ -9,8 +9,8 @@ namespace eMeL.ConsoleWindows
   {
     #region private
 
-    private int      _top;
-    private int      _left;
+    private int      _row;
+    private int      _col;
     private int      _width;
     private int      _height;
 
@@ -19,8 +19,8 @@ namespace eMeL.ConsoleWindows
     #endregion
 
     #region interface
-    public  int       top         { get { return _top; }          set { _top = value;        IndicateChange(); } }
-    public  int       left        { get { return _left; }         set { _left = value;       IndicateChange(); } }
+    public  int       row         { get { return _row; }          set { _row = value;        IndicateChange(); } }
+    public  int       col         { get { return _col; }          set { _col = value;       IndicateChange(); } }
     public  int       width       { get { return _width; }        set { _width = value;      IndicateChange(); } }
     public  int       height      { get { return _height; }       set { _height = value;     IndicateChange(); } }
 
@@ -29,10 +29,10 @@ namespace eMeL.ConsoleWindows
 
     public  event  ChangedEventHandler Changed;
 
-    public Region (int top, int left, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Region (int row, int col, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
     {
-      this.top        = top;   
-      this.left       = left;  
+      this.row        = row;   
+      this.col        = col;  
       this.width      = width; 
       this.height     = height;
       this.foreground = foreground; 
@@ -41,8 +41,8 @@ namespace eMeL.ConsoleWindows
 
     public Region (IPosition position, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
     {
-      this.top        = position.top;   
-      this.left       = position.left;  
+      this.row        = position.row;   
+      this.col        = position.col;  
       this.width      = width; 
       this.height     = height;
       this.foreground = foreground; 
@@ -51,8 +51,8 @@ namespace eMeL.ConsoleWindows
 
     public Region (IPosition position, ISize size, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
     {
-      this.top        = position.top;   
-      this.left       = position.left;  
+      this.row        = position.row;   
+      this.col        = position.col;  
       this.width      = size.width; 
       this.height     = size.height;
       this.foreground = foreground; 
@@ -61,8 +61,8 @@ namespace eMeL.ConsoleWindows
 
     public Region (IRegion region)
     {
-      this.top        = region.top;   
-      this.left       = region.left;  
+      this.row        = region.row;   
+      this.col        = region.col;  
       this.width      = region.width; 
       this.height     = region.height;
       this.foreground = region.foreground; 

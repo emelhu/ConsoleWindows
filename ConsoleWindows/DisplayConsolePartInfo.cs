@@ -7,8 +7,8 @@ namespace eMeL.ConsoleWindows
 {
   public struct DisplayConsolePartInfo
   {
-    public int          top;
-    public int          left;
+    public int          row;
+    public int          col;
     public int          width;
     public int          height;
 
@@ -21,10 +21,10 @@ namespace eMeL.ConsoleWindows
     public Scrollbars?  scrollbars;                                                               // nullable if no content to display
 
 
-    //public DisplayConsolePartInfo (int top, int left, int width, int height, WinColor foreground, WinColor background, string displayText = null)
+    //public DisplayConsolePartInfo (int row, int col, int width, int height, WinColor foreground, WinColor background, string displayText = null)
     //{
-    //  this.top          = top;   
-    //  this.left         = left;  
+    //  this.row          = row;   
+    //  this.col          = col;  
     //  this.width        = width; 
     //  this.height       = height;
     //  this.foreground   = foreground; 
@@ -34,8 +34,8 @@ namespace eMeL.ConsoleWindows
 
     public DisplayConsolePartInfo(IRegion region)
     {
-      this.top          = region.top;
-      this.left         = region.left;
+      this.row          = region.row;
+      this.col          = region.col;
       this.width        = region.width;
       this.height       = region.height;
       this.foreground   = region.foreground;

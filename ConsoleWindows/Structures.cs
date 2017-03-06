@@ -7,19 +7,19 @@ namespace eMeL.ConsoleWindows
 {
   public struct Position : IPosition
   {                         
-    public int  top     { get; set; }
-    public int  left    { get; set; }
+    public int  row    { get; set; }
+    public int  col    { get; set; }
 
-    public Position(int top, int left)
+    public Position(int row, int col)
     {
-      this.top  = top; 
-      this.left = left;
+      this.row  = row; 
+      this.col  = col;
     }
 
     public Position(Position pos)
     {
-      this.top  = pos.top; 
-      this.left = pos.left;
+      this.row  = pos.row; 
+      this.col  = pos.col;
     }
   }
 

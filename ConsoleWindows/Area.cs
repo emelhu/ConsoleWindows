@@ -14,8 +14,8 @@ namespace eMeL.ConsoleWindows
     public  Border?      border      { get { return _border; }       set { _border     = value; IndicateChange(); } }
     public  Scrollbars?  scrollbars  { get { return _scrollbars; }   set { _scrollbars = value; IndicateChange(); } }
 
-    public Area(int top, int left, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
-      : base(top, left, width, height, foreground, background)
+    public Area(int row, int col, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
+      : base(row, col, width, height, foreground, background)
     {
       this.border     = border;
       this.scrollbars = scrollbars;
@@ -29,7 +29,7 @@ namespace eMeL.ConsoleWindows
     }
 
     public Area(IArea area)
-      : base(area.top, area.left, area.width, area.height, area.foreground, area.background)
+      : base(area.row, area.col, area.width, area.height, area.foreground, area.background)
     {
       this.border     = area.border;
       this.scrollbars = area.scrollbars;
