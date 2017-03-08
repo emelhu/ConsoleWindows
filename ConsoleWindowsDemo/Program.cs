@@ -118,31 +118,28 @@ namespace ConsoleWindowsDemo
       textElement = new TextElement(10, 10, "Pressed key:", WinColor.Blue, WinColor.White);  
       conWin.rootWindow.AddElement(textElement);  
 
-      textElement = new TextElement(10, 24, 20, 1, WinColor.Red, WinColor.Yellow);  
+      textElement = new TextElement(10, 24, 30, 1, WinColor.Red, WinColor.Yellow);  
       conWin.rootWindow.AddElement(textElement);  
 
       con.ApplyPreviewReadedKey(consoleKeyInfo =>
           {
-            textElement.text = consoleKeyInfo.Key.ToString();
+            string text = consoleKeyInfo.Key.ToString() + "  [";
+
+            if (consoleKeyInfo.KeyChar != 0)
+            {
+            text += consoleKeyInfo.KeyChar; 
+            }
+
+            text += "]";
+
+            textElement.text = text;
         
             return consoleKeyInfo;                                                 // pass on this key to process [but you can modify it, for example uppercase use]
           });
 
       conWin.Start();
 
-      //ConsoleKeyInfo keyInfo;
-
-      //do
-      //{ 
-      //  if (Console.KeyAvailable)
-      //  {
-      //    keyInfo = Console.ReadKey();
-      //  }
-      //  else
-      //  {
-      //    Thread.Sleep(100);
-      //  }
-      //} while (keyInfo.Key != ConsoleKey.Escape);
+      int dummy = 0;
     }
 
     public static void BorderAndAreaTest1()

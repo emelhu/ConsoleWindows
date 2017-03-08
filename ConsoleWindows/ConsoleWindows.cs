@@ -4,7 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+
+// https://www.codeproject.com/articles/335909/embedding-a-console-in-a-c-application
+// https://github.com/dwmkerr/consolecontrol
 
 namespace eMeL.ConsoleWindows
 {
@@ -53,7 +57,6 @@ namespace eMeL.ConsoleWindows
       }   
       
       this.virtualConsole = virtualConsole;  
-      this.virtualConsole.previewReadedKeyInternal = (consoleKeyInfo) => ConsoleKeyHappen(consoleKeyInfo);
 
       var area = new Area(0, 0, virtualConsole.cols, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
 
@@ -157,30 +160,45 @@ namespace eMeL.ConsoleWindows
 
     #region Start/Process
 
-    private bool stopProcess = false;
+    private CancellationTokenSource cancellationTokenSource;
 
-    public void Start()
+    public void Start(bool wait = true)
     {
-      this.virtualConsole.StartKeyboard();                                                        // ConsoleKeyHappen() calls
+      cancellationTokenSource = new CancellationTokenSource();
+      var cancellationToken   = cancellationTokenSource.Token;
 
-      while (! stopProcess)
+      var task = Task.Run(() =>
+        {
+          while (! cancellationToken.IsCancellationRequested)
+          {
+            ConsoleKeyInfo? keyInfoNullable = this.virtualConsole.ReadKeyEx(cancellationToken);
+
+            if (keyInfoNullable != null)
+            {
+              ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
+
+              if (keyInfo.Key == ConsoleKey.Escape)
+              {
+                // TODO: ablak kilépési engedély vizsgálat
+
+                cancellationTokenSource.Cancel();
+              }
+            }
+          }
+        }, cancellationToken);
+
+      if (wait)
       {
-
+        task.Wait();                                                                                // cancellationTokenSource.Cancel() for stop waiting
       }
     }
 
-    private ConsoleKeyInfo? ConsoleKeyHappen(ConsoleKeyInfo keyInfo)
+    public void Stop()
     {
-      if (keyInfo.Key == ConsoleKey.Escape)
+      if (cancellationTokenSource != null)
       {
-        // TODO: ablak kilépési engedély vizsgálat
-
-        stopProcess = true; 
-
-        return null;
+        cancellationTokenSource.Cancel();
       }
-
-      return keyInfo;
     }
 
     #endregion
@@ -197,8 +215,7 @@ namespace eMeL.ConsoleWindows
     {
       if (this.virtualConsole != null)
       {
-        this.virtualConsole.previewReadedKeyInternal = null;
-        this.virtualConsole                          = null;
+        this.virtualConsole = null;
       }
     }
     #endregion

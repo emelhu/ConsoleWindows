@@ -212,9 +212,9 @@ namespace eMeL.ConsoleWindows
 
     #region keyboard management
 
-    internal void StartKeyboard()
+    internal ConsoleKeyInfo?  ReadKeyEx(CancellationToken cancellationToken)
     {
-      while (true)
+      while (! cancellationToken.IsCancellationRequested)
       {
         if (KeyAvailable)
         {
@@ -238,16 +238,18 @@ namespace eMeL.ConsoleWindows
             cki = previewReadedKey((ConsoleKeyInfo)cki);
           }
 
-          if ((cki != null) && (previewReadedKeyInternal != null))                                  // ConsoleWindows process
+          if (cki != null)                                                                          // return data to ConsoleWindows process
           {
-            cki = previewReadedKeyInternal((ConsoleKeyInfo)cki);
+            return cki;
           }
         }
         else
         {
-          Thread.Sleep(100);
+          Thread.Sleep(50);
         }
       }
+
+      return null;
     }
 
     /// <summary>
@@ -291,8 +293,7 @@ namespace eMeL.ConsoleWindows
     }
 
     private   Stack<Func<ConsoleKeyInfo, ConsoleKeyInfo?>>   previewReadedKeyStack    = new Stack<Func<ConsoleKeyInfo, ConsoleKeyInfo?>>();
-    private   Func<ConsoleKeyInfo, ConsoleKeyInfo?>          previewReadedKey         = null;                         // for application
-    internal  Func<ConsoleKeyInfo, ConsoleKeyInfo?>          previewReadedKeyInternal = null;                         // for ConsoleWindows
+    private   Func<ConsoleKeyInfo, ConsoleKeyInfo?>          previewReadedKey         = null;                         // for application    
 
     private   Dictionary<ConsoleKey, Func<ConsoleKeyInfo, ConsoleKeyInfo?>>   previewReadedKeyDictionary = null;
 
