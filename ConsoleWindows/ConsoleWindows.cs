@@ -12,39 +12,40 @@ namespace eMeL.ConsoleWindows
   {
     #region private variables, properties
 
-    public class ConsoleWindowsViewModel : IViewModel
-    {
-      #region IViewModel implementation
-      public event ChangedEventHandler Changed;
-
-      public void IndicateChange()
-      {
-        if (Changed != null)
-        {
-          Changed(this);                                                                            // aka: Changed?.Invoke(this);
-        }
-      }
-      #endregion
-    }
-
-    public ConsoleWindowsViewModel viewModel { get; private set; } = new ConsoleWindowsViewModel();
-
     #endregion
 
     #region public variables, properties
 
-    public Window<ConsoleWindowsViewModel>  rootWindow      { get; private set; }
-    public VirtualConsole                   virtualConsole  { get; private set; }
+    public Window<IViewModel> rootWindow      { get; private set; }
+    public VirtualConsole     virtualConsole  { get; private set; }
 
     public int rows { get { return virtualConsole.rows; } }
     public int cols { get { return virtualConsole.cols; } }
+    
+    public Window<IViewModel> actualWindow  { get; private set; }
+    public IElement           actualElement { get; private set; }
 
     #endregion
 
     #region constructor
 
-    public ConsoleWindows(VirtualConsole virtualConsole)
+    public ConsoleWindows(VirtualConsole virtualConsole, Window<IViewModel> rootWindow)
     {
+      if (virtualConsole == null)
+      {
+        throw new NullReferenceException("ConsoleWindows(VirtualConsole virtualConsole): there is a null parameter!");
+      }
+
+      if (rootWindow == null)
+      {
+        throw new NullReferenceException("ConsoleWindows(Window<IViewModel> rootWindow): there is a null parameter!");
+      }
+
+      if (! (rootWindow.viewModel is RootWindowViewModel))
+      {
+        throw new NullReferenceException("ConsoleWindows(Window<IViewModel> rootWindow): rootWindow.viewModel is not a RootWindowViewModel!");
+      }
+
       if (String.IsNullOrWhiteSpace(Console.Title))
       {
         var args = Environment.GetCommandLineArgs();
@@ -56,25 +57,16 @@ namespace eMeL.ConsoleWindows
 
       var area = new Area(0, 0, virtualConsole.cols, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
 
-      rootWindow = new Window<ConsoleWindowsViewModel>(viewModel, area);
+      this.rootWindow = rootWindow;
 
-      rootWindow._consoleWindows = this;                                                          // Only in root filled. (All window can seek it by recursive way... it's good for freedom of attach/detach windows)
+      rootWindow._consoleWindows = this;                                                          // Only in root filled. (All window can seek it by recursive way... it's good for freedom of attach/detach/orphan windows)
 
-      this.SetDefaultLayout();                                                                    // ConsoleWindowsExtension.cs
+      actualWindow = rootWindow;     
     }
-
-    private bool ConsoleKeyHappen(ConsoleKeyInfo consoleKeyInfo)
-    {
-      throw new NotImplementedException("ConsoleKeyHappen");
-    }
+    
     #endregion
 
     #region public
-
-    public void ClearRootWindowLayout()
-    {
-
-    }
 
     public static string AssemblyDirectory
     {
@@ -163,12 +155,35 @@ namespace eMeL.ConsoleWindows
 
     #endregion
 
-    #region Start
+    #region Start/Process
+
+    private bool stopProcess = false;
 
     public void Start()
     {
+      this.virtualConsole.StartKeyboard();                                                        // ConsoleKeyHappen() calls
 
+      while (! stopProcess)
+      {
+
+      }
     }
+
+    private ConsoleKeyInfo? ConsoleKeyHappen(ConsoleKeyInfo keyInfo)
+    {
+      if (keyInfo.Key == ConsoleKey.Escape)
+      {
+        // TODO: ablak kilépési engedély vizsgálat
+
+        stopProcess = true; 
+
+        return null;
+      }
+
+      return keyInfo;
+    }
+
+    #endregion
 
     #region IDisposable implementation
 
@@ -186,8 +201,6 @@ namespace eMeL.ConsoleWindows
         this.virtualConsole                          = null;
       }
     }
-    #endregion
-
     #endregion
   }
 }

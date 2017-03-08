@@ -7,7 +7,7 @@
 
   <Import Project="$(VSToolsPath)\DotNet\Microsoft.DotNet.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>a29f28f9-26c5-4a28-8919-cc7a4e1cedd2</ProjectGuid>
+    <ProjectGuid>f3fefd35-d1ab-4429-a010-09d307968d16</ProjectGuid>
     <RootNamespace>ConsoleWindowsDemo</RootNamespace>
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">.\obj</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">.\bin\</OutputPath>

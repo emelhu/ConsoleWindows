@@ -38,6 +38,12 @@ namespace eMeL.ConsoleWindows
   public interface IElement : IRegion
   {
     string displayText { get; }
+
+    /// <summary>
+    /// Define a function for validate content of element.
+    /// It returns a null if no error, or an error text.
+    /// </summary>
+    Func<IElement, string> validate { get; set; }
   }
 
   public interface IViewModel

@@ -37,7 +37,7 @@ namespace eMeL.ConsoleWindows.Core
 
     protected override ConsoleKeyInfo ReadKey()
     {
-      return Console.ReadKey();
+      return Console.ReadKey(true);
     }
 
     public override void Display()
@@ -91,7 +91,7 @@ namespace eMeL.ConsoleWindows.Core
       }      
     }
 
-    protected override void ConsoleInit()
+    protected override void ConsoleInit(bool setWindowSize)
     {
       if ((Console.BufferWidth < this.cols) && (Console.BufferHeight < this.rows))
       {
@@ -109,7 +109,10 @@ namespace eMeL.ConsoleWindows.Core
         }
       }
 
-      Console.SetWindowSize(this.cols, this.rows);
+      if (setWindowSize)
+      {
+        Console.SetWindowSize(this.cols, this.rows);
+      }
 
       if (String.IsNullOrWhiteSpace(this.title))
       {

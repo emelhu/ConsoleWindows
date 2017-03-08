@@ -97,35 +97,52 @@ namespace ConsoleWindowsDemo
 
     public static void SimpleTest1()
     {
+      VirtualConsole.defaultSetWindowSize = false;
+
       TextElement.defaultBackground = WinColor.DarkGray;
       TextElement.defaultForeground = WinColor.Gray;
 
       var con    = new CoreConsole("SimpleTest1 --- ConsoleWindowsDemo");
-      var conWin = new ConsoleWindows(con);
+      var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
       var textElement = new TextElement(0, 0, String.Join("", textArray));  
       conWin.rootWindow.AddElement(textElement);
 
-      textElement = new TextElement(1, 0, "1");  
-      conWin.rootWindow.AddElement(textElement);    
+      for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
+      {
+        textElement = new TextElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        conWin.rootWindow.AddElement(textElement);
+      }
 
-      textElement = new TextElement(2, 0, "2");  
-      conWin.rootWindow.AddElement(textElement);    
+      textElement = new TextElement(10, 10, "Pressed key:", WinColor.Blue, WinColor.White);  
+      conWin.rootWindow.AddElement(textElement);  
 
-      ConsoleKeyInfo keyInfo;
+      textElement = new TextElement(10, 24, 20, 1, WinColor.Red, WinColor.Yellow);  
+      conWin.rootWindow.AddElement(textElement);  
 
-      do
-      { 
-        if (Console.KeyAvailable)
-        {
-          keyInfo = Console.ReadKey();
-        }
-        else
-        {
-          Thread.Sleep(100);
-        }
-      } while (keyInfo.Key != ConsoleKey.Escape);
+      con.ApplyPreviewReadedKey(consoleKeyInfo =>
+          {
+            textElement.text = consoleKeyInfo.Key.ToString();
+        
+            return consoleKeyInfo;                                                 // pass on this key to process [but you can modify it, for example uppercase use]
+          });
+
+      conWin.Start();
+
+      //ConsoleKeyInfo keyInfo;
+
+      //do
+      //{ 
+      //  if (Console.KeyAvailable)
+      //  {
+      //    keyInfo = Console.ReadKey();
+      //  }
+      //  else
+      //  {
+      //    Thread.Sleep(100);
+      //  }
+      //} while (keyInfo.Key != ConsoleKey.Escape);
     }
 
     public static void BorderAndAreaTest1()
@@ -134,7 +151,7 @@ namespace ConsoleWindowsDemo
       TextElement.defaultForeground = WinColor.Gray;
 
       var con    = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo");
-      var conWin = new ConsoleWindows(con);
+      var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
       var textElement = new TextElement(0, 0, String.Join("", textArray));  
@@ -179,7 +196,7 @@ namespace ConsoleWindowsDemo
       TextElement.defaultForeground = WinColor.Gray;
 
       var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
-      var conWin = new ConsoleWindows(con);
+      var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var region = new Region(3, 10, 10, 10, WinColor.Cyan, WinColor.Green);
       var area   = new Area(  6, 20, 10, 15, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFramePattern1));

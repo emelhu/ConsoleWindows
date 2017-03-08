@@ -22,6 +22,12 @@ namespace eMeL.ConsoleWindows
       }
     }
 
+    /// <summary>
+    /// Define a function for validate content of TextElement.
+    /// It returns a null if no error, or an error text.
+    /// </summary>
+    public Func<IElement, string> validate { get; set; }
+
     #region constructors
 
     public TextElement(Region region, string text = null)
@@ -41,8 +47,16 @@ namespace eMeL.ConsoleWindows
       Normalize();
     }
 
-    public TextElement (IPosition position, int width, int height = 1, WinColor foreground = WinColor.None, WinColor background = WinColor.None, string text = null)
+    public TextElement (IPosition position, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, string text = null)
     : base(position, width, height, foreground, background)
+    {
+      this.text = text;
+
+      Normalize();
+    }
+
+    public TextElement (IPosition position, int width, WinColor foreground = WinColor.None, WinColor background = WinColor.None, string text = null)
+    : base(position, width, 1, foreground, background)
     {
       this.text = text;
 

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -31,6 +32,9 @@ namespace eMeL.ConsoleWindows
 
     public  ConColor  foreground  { get; private set; }
     public  ConColor  background  { get; private set; }
+
+    public static bool defaultSetWindowSize = true;
+    private       bool setWindowSize        = defaultSetWindowSize;
     #endregion
 
     #region refresh wait time
@@ -67,7 +71,7 @@ namespace eMeL.ConsoleWindows
 
     #region constructor
 
-    public VirtualConsole(string  title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White, IConsoleMouse consoleMouse = null)
+    public VirtualConsole(string title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White, IConsoleMouse consoleMouse = null, bool? setWindowSize = null)
     {
       rows    = Math.Min(Math.Max(rows, minRows), maxRows);
       cols    = Math.Min(Math.Max(cols, minCols), maxCols);
@@ -82,7 +86,9 @@ namespace eMeL.ConsoleWindows
       this.foreground = foreground;
       this.background = background;
 
-      ConsoleInit();
+      this.setWindowSize = setWindowSize ?? defaultSetWindowSize;
+
+      ConsoleInit(this.setWindowSize);
 
       if (consoleMouse != null)
       {
@@ -90,7 +96,7 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    protected abstract void ConsoleInit();
+    protected abstract void ConsoleInit(bool setWindowSize);
     #endregion
 
     #region Write
@@ -210,25 +216,31 @@ namespace eMeL.ConsoleWindows
     {
       while (true)
       {
-        bool processed = false;
-
         if (KeyAvailable)
         {
-          ConsoleKeyInfo cki = ReadKey();
+          ConsoleKeyInfo? cki = ReadKey();
 
-          if (previewReadedKeyInternal != null)                                                   // ConsoleWindows process
+          if ((cki != null) && (previewReadedKeyDictionary != null))
           {
-            processed = previewReadedKeyInternal(cki);
+            if (previewReadedKeyDictionary.ContainsKey(((ConsoleKeyInfo)cki).Key))
+            {
+              var func = previewReadedKeyDictionary[((ConsoleKeyInfo)cki).Key];                     // previewReadedKeyDictionary[cki.Key]?.Invoke(cki);
+
+              if (func != null)
+              {
+                cki = func((ConsoleKeyInfo)cki);
+              }
+            }
           }
 
-          if ((! processed) && (previewReadedKey != null))                                        // Application process
+          if ((cki != null) && (previewReadedKey != null))                                          // Application process
           {
-            processed = previewReadedKey(cki);
+            cki = previewReadedKey((ConsoleKeyInfo)cki);
           }
 
-          if (! processed)
+          if ((cki != null) && (previewReadedKeyInternal != null))                                  // ConsoleWindows process
           {
-            // TODO.........................................................................
+            cki = previewReadedKeyInternal((ConsoleKeyInfo)cki);
           }
         }
         else
@@ -247,18 +259,16 @@ namespace eMeL.ConsoleWindows
     ///    {
     ///      PrintContent();
     ///
-    ///      return true;                                                         // catched key, do not process further
+    ///      return null;                                                         // catched key, do not process further
     ///    }
-    ///    else
-    ///    {
-    ///      return false;                                                        // pass on this key to process
-    ///    }
+    ///    
+    ///    return consoleKeyInfo;                                                 // pass on this key to process [but you can modify it, for example uppercase use]
     ///  });
     /// Typical usage mode apply a new function [by this] at 'Window.StartEditable()' for preview and process key types.
     /// At the same time use a RestorePreviewReadedKey() at 'Window.StopEditable()'.
+    /// Warning: you can catch key before (away from) ConsoleWindows process.
     /// </summary>
-    /// 
-    public void ApplyPreviewReadedKey(Func<ConsoleKeyInfo, bool> previewReadedKey)
+    public void ApplyPreviewReadedKey(Func<ConsoleKeyInfo, ConsoleKeyInfo?> previewReadedKey)
     {
       previewReadedKeyStack.Push(this.previewReadedKey);
       this.previewReadedKey = previewReadedKey;
@@ -280,11 +290,43 @@ namespace eMeL.ConsoleWindows
       this.previewReadedKey = previewReadedKeyStack.Pop();
     }
 
-    private   Stack<Func<ConsoleKeyInfo, bool>>   previewReadedKeyStack    = new Stack<Func<ConsoleKeyInfo, bool>>();
-    private   Func<ConsoleKeyInfo, bool>          previewReadedKey         = null;                         // for application
-    internal  Func<ConsoleKeyInfo, bool>          previewReadedKeyInternal = null;                         // for ConsoleWindows
+    private   Stack<Func<ConsoleKeyInfo, ConsoleKeyInfo?>>   previewReadedKeyStack    = new Stack<Func<ConsoleKeyInfo, ConsoleKeyInfo?>>();
+    private   Func<ConsoleKeyInfo, ConsoleKeyInfo?>          previewReadedKey         = null;                         // for application
+    internal  Func<ConsoleKeyInfo, ConsoleKeyInfo?>          previewReadedKeyInternal = null;                         // for ConsoleWindows
 
-    // ConsoleKey
+    private   Dictionary<ConsoleKey, Func<ConsoleKeyInfo, ConsoleKeyInfo?>>   previewReadedKeyDictionary = null;
+
+    /// <summary>
+    /// Watch a keypress by a function for preview readed console key and a possibility to catch it.
+    /// example: 
+    /// WatchPreviewReadedKey(ConsoleKey.Print, consoleKeyInfo =>
+    ///  {
+    ///    PrintContent(consoleWindows.actualWindow);
+    ///
+    ///    return null;                                                         // catched key, do not process further    
+    ///  });
+    /// Warning: you can catch key before (away from) ConsoleWindows process.
+    /// </summary>
+    ///  
+    public void WatchPreviewReadedKey(ConsoleKey key, Func<ConsoleKeyInfo, ConsoleKeyInfo?> previewReadedKey)
+    {
+      if (previewReadedKeyDictionary == null)
+      {
+        previewReadedKeyDictionary = new Dictionary<ConsoleKey, Func<ConsoleKeyInfo, ConsoleKeyInfo?>>();
+      }
+
+      previewReadedKeyDictionary[key] = previewReadedKey;
+    }
+
+    public void UnwatchPreviewReadedKey(ConsoleKey key, Func<ConsoleKeyInfo, ConsoleKeyInfo?> previewReadedKey)
+    {
+      if ((previewReadedKeyDictionary == null) || ! previewReadedKeyDictionary.ContainsKey(key))
+      {
+        throw new InvalidOperationException("VirtualConsole.UnwatchPreviewReadedKey(" + key.ToString() + "): there isn't this key watching!");
+      }
+
+      previewReadedKeyDictionary.Remove(key);
+    }
 
     #endregion
 

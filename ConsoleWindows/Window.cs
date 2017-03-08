@@ -73,6 +73,11 @@ namespace eMeL.ConsoleWindows
     {
     }
 
+    //public static explicit operator Window<TViewModel>(Window<ConsoleWindows.ConsoleWindowsViewModel> v)
+    //{
+    //  return (Window<TViewModel>)v;
+    //}
+
     public Window(TViewModel viewModel, int row, int col, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
       : base (row, col, width, height, foreground, background, border, scrollbars)
     {  
@@ -392,8 +397,14 @@ namespace eMeL.ConsoleWindows
 
     #region actions
 
-    public Action StartEditable;
-    public Action StopEditable;
+    public Action StartEditable             { get; set; }
+    public Action StopEditable              { get; set; }
+
+    /// <summary>
+    /// Define a function for validate content of Window.
+    /// It returns a null if no error, or an error text.
+    /// </summary>
+    public Func<Window<IViewModel>, string> validate  { get; set; }
 
     #endregion
 
