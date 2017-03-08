@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-// System.Console
-
 namespace eMeL.ConsoleWindows.Core
 {
   using System.Diagnostics;
@@ -27,6 +25,19 @@ namespace eMeL.ConsoleWindows.Core
       #if DEBUG
       traceEnabled = true;
       #endif
+    }
+
+    protected override bool KeyAvailable
+    {
+      get
+      {
+        return Console.KeyAvailable;
+      }
+    }
+
+    protected override ConsoleKeyInfo ReadKey()
+    {
+      return Console.ReadKey();
     }
 
     public override void Display()

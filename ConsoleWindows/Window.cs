@@ -1,4 +1,5 @@
-﻿//#define USE_refreshWaitTime
+﻿#define USE_refreshWait                                               // for increase performance | comment of it to debug
+//#define USE_traceEnabled                                              // Write trace messages
 
 using System;
 using System.Linq;
@@ -83,10 +84,6 @@ namespace eMeL.ConsoleWindows
       }
 
       state = State.Editable;                                                                     // default state
-
-      #if DEBUG
-      traceEnabled = true;
-      #endif
     }
     
     public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
@@ -113,10 +110,12 @@ namespace eMeL.ConsoleWindows
 
       elements.Add(element);
 
+      #if USE_traceEnabled
       if (traceEnabled)
       {
         Trace.WriteLine(">> Window.AddElement: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
       }
+      #endif
 
       element.Changed += new ChangedEventHandler(ChangedEvent);
 
@@ -141,10 +140,10 @@ namespace eMeL.ConsoleWindows
       get { return _defaultRefreshWaitTime; }
       set { _defaultRefreshWaitTime = RefreshWaitTimeBarrier(value); }
     }
-    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(200);
+    private static    int     _defaultRefreshWaitTime = RefreshWaitTimeBarrier(100);
 
-    public  const     int     minRefreshWaitTime      = 100;
-    public  const     int     maxRefreshWaitTime      = 500;
+    public  const     int     minRefreshWaitTime      = 50;
+    public  const     int     maxRefreshWaitTime      = 300;
     
     private static    int     RefreshWaitTimeBarrier(int waitTime)
     {
@@ -196,14 +195,16 @@ namespace eMeL.ConsoleWindows
 
         if (dropRequest)
         { // This refresh request will dropped because a previous refresh request will call Display() 
+          #if USE_traceEnabled
           if (traceEnabled)
           {
             Trace.WriteLine(">> Window.Refresh()/dropRequest: " + lastChange.ToString());
           }
+          #endif
         }
         else
         {
-          #if USE_refreshWaitTime
+          #if USE_refreshWait
           refreshWait = true;                                                                       // Signal for thereafter Refresh requests. [to be notified Display() will call]
 
           Task.Run(() =>
@@ -217,39 +218,40 @@ namespace eMeL.ConsoleWindows
           #else
           refreshWait = false;
           Display();
-          #endif          
+          #endif
         }
       }
     }
 
     private void ChangedEvent(object source)
     {
+      #if USE_traceEnabled
       if (traceEnabled)
       {
         Trace.WriteLine(">> Window.ChangedEvent(): " + Environment.TickCount.ToString() + " | " + source.GetType().ToString());
       }
+      #endif
 
       Refresh();
     }
 
-    public void Display()
+    public void Display(bool force = false)
     {
       if (isVisible)
       {
-        lock (ConsoleWindows.lockConsole)                                                           // Centralized lock for all windows
+        if ((lastChange > lastRefresh) || force)
         {
-          if (lastChange > lastRefresh)
+          lastRefresh = Environment.TickCount;                                                    // start time of refresh
+
+          #if USE_traceEnabled
+          if (traceEnabled)
           {
-            lastRefresh = Environment.TickCount;                                                    // start time of refresh
-
-            if (traceEnabled)
-            {
-              Trace.WriteLine(">> Window.Display(): " + lastRefresh.ToString());
-            }
-
-            InternalDisplay();
+            Trace.WriteLine(">> Window.Display(): " + lastRefresh.ToString());
           }
-        }
+          #endif
+
+          InternalDisplay();
+        }     
       }
     }
 
@@ -288,8 +290,8 @@ namespace eMeL.ConsoleWindows
     {
       int dummy; // TODO
 
-      partInfo.width  = Math.Max(partInfo.width,  (this.width  - partInfo.col));   // TODO: this.width  must correction with Border+Scrollbar
-      partInfo.height = Math.Max(partInfo.height, (this.height - partInfo.row));   // TODO: this.height must correction with Border+Scrollbar
+      partInfo.width  = Math.Min(partInfo.width,  (this.width  - partInfo.col));   // TODO: this.width  must correction with Border+Scrollbar
+      partInfo.height = Math.Min(partInfo.height, (this.height - partInfo.row));   // TODO: this.height must correction with Border+Scrollbar
 
       partInfo.row    += this.row;
       partInfo.col    += this.col;
@@ -320,15 +322,16 @@ namespace eMeL.ConsoleWindows
 
       return orderedElements;
     }    
-#endregion
+    #endregion
 
-#region usage/visibility/editable
+    #region usage/visibility/editable
 
     public enum State
     {
-      Hide      = 0,
-      ReadOnly  = 1,
-      Editable  = 2
+      Killed    = 0,
+      Hide      = 1,
+      ReadOnly  = 2,
+      Editable  = 3
     }
 
     public State state
@@ -342,7 +345,7 @@ namespace eMeL.ConsoleWindows
     {
       get
       {
-        if (state == State.Hide)                                                                  
+        if ((state == State.Hide) || (state == State.Killed))
         {
           return false;
         }
@@ -351,7 +354,7 @@ namespace eMeL.ConsoleWindows
         {
           if (isRootWindow)
           {
-            return (state != State.Hide);
+            return (state != State.Hide) && (state != State.Killed);
           }
 
           return false;                                                                           // Orphan window, haven't a valid root window
@@ -363,9 +366,9 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-#endregion
+    #endregion
 
-#region field step / proceed
+    #region field step / proceed
 
     public void ProceedFirstField()
     {
@@ -385,9 +388,16 @@ namespace eMeL.ConsoleWindows
 
     }
 
-#endregion
+    #endregion
 
-#region IDisposable implementation
+    #region actions
+
+    public Action StartEditable;
+    public Action StopEditable;
+
+    #endregion
+
+    #region IDisposable implementation
 
     private bool disposedValue = false;                                                           // To detect redundant calls
 
@@ -433,12 +443,12 @@ namespace eMeL.ConsoleWindows
     {
       Dispose(true);
     }
-#endregion
+    #endregion
 
-#region others
-
-    public static bool traceEnabled = false;
-
-#endregion
+    #region others
+    #if USE_traceEnabled
+      public static bool traceEnabled = true;
+    #endif
+    #endregion
   }
 }

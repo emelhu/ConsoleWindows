@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public class ConsoleWindows
+  public class ConsoleWindows : IDisposable
   {
     #region private variables, properties
 
@@ -51,7 +51,8 @@ namespace eMeL.ConsoleWindows
         Console.Title = args[0];                                                                  // or AssemblyDirectory;
       }   
       
-      this.virtualConsole = virtualConsole;     
+      this.virtualConsole = virtualConsole;  
+      this.virtualConsole.previewReadedKeyInternal = (consoleKeyInfo) => ConsoleKeyHappen(consoleKeyInfo);
 
       var area = new Area(0, 0, virtualConsole.cols, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
 
@@ -60,6 +61,11 @@ namespace eMeL.ConsoleWindows
       rootWindow._consoleWindows = this;                                                          // Only in root filled. (All window can seek it by recursive way... it's good for freedom of attach/detach windows)
 
       this.SetDefaultLayout();                                                                    // ConsoleWindowsExtension.cs
+    }
+
+    private bool ConsoleKeyHappen(ConsoleKeyInfo consoleKeyInfo)
+    {
+      throw new NotImplementedException("ConsoleKeyHappen");
     }
     #endregion
 
@@ -84,11 +90,6 @@ namespace eMeL.ConsoleWindows
     #endregion
 
     #region statics
-
-    /// <summary>
-    /// There is for lock Console for write, because SetCursorPosition/ForegroundColor/BackgroundColor/Write sequence isn't atomic.
-    /// </summary>
-    internal static object lockConsole = new object();
 
     public static ElementDescriptionInfo? GetDescription(Type type)
     {
@@ -159,6 +160,33 @@ namespace eMeL.ConsoleWindows
 
       return text;
     }
+
+    #endregion
+
+    #region Start
+
+    public void Start()
+    {
+
+    }
+
+    #region IDisposable implementation
+
+    ~ConsoleWindows()
+    {      
+      Dispose();
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    public void Dispose()
+    {
+      if (this.virtualConsole != null)
+      {
+        this.virtualConsole.previewReadedKeyInternal = null;
+        this.virtualConsole                          = null;
+      }
+    }
+    #endregion
 
     #endregion
   }

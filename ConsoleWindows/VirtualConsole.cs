@@ -1,4 +1,5 @@
-﻿//#define USE_refreshWaitTime
+﻿#define USE_refreshWait                                                         // for increase performance | comment of it to debug
+//#define USE_traceEnabled                                                        // Write trace messages
 
 using System;
 using System.Collections.Generic;
@@ -87,10 +88,6 @@ namespace eMeL.ConsoleWindows
       {
         consoleMouse.Init(this);
       }
-
-      #if DEBUG
-      traceEnabled = true;
-      #endif
     }
 
     protected abstract void ConsoleInit();
@@ -171,18 +168,9 @@ namespace eMeL.ConsoleWindows
 
       return (ConColor)ret;
     }
-    #endregion
+    #endregion    
 
-    #region keyboard
-
-    public void Start()
-    {
-
-    }
-
-    #endregion
-
-    #region abstract Display
+    #region child class Display helpers
 
     protected char[] GetDispChars(int pos, int len)
     {
@@ -205,8 +193,98 @@ namespace eMeL.ConsoleWindows
 
       return colors[pos];
     }
+    #endregion
 
-    public abstract void Display();    
+    #region abstract
+
+    public    abstract  void            Display();
+
+    protected abstract  bool            KeyAvailable { get; }
+    protected abstract  ConsoleKeyInfo  ReadKey();
+
+    #endregion
+
+    #region keyboard management
+
+    internal void StartKeyboard()
+    {
+      while (true)
+      {
+        bool processed = false;
+
+        if (KeyAvailable)
+        {
+          ConsoleKeyInfo cki = ReadKey();
+
+          if (previewReadedKeyInternal != null)                                                   // ConsoleWindows process
+          {
+            processed = previewReadedKeyInternal(cki);
+          }
+
+          if ((! processed) && (previewReadedKey != null))                                        // Application process
+          {
+            processed = previewReadedKey(cki);
+          }
+
+          if (! processed)
+          {
+            // TODO.........................................................................
+          }
+        }
+        else
+        {
+          Thread.Sleep(100);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Define a function for preview readed console key and a possibility to catch it.
+    /// example: 
+    /// PushPreviewReadedKey(consoleKeyInfo =>
+    ///  {
+    ///    if (consoleKeyInfo.Key == ConsoleKey.Print)
+    ///    {
+    ///      PrintContent();
+    ///
+    ///      return true;                                                         // catched key, do not process further
+    ///    }
+    ///    else
+    ///    {
+    ///      return false;                                                        // pass on this key to process
+    ///    }
+    ///  });
+    /// Typical usage mode apply a new function [by this] at 'Window.StartEditable()' for preview and process key types.
+    /// At the same time use a RestorePreviewReadedKey() at 'Window.StopEditable()'.
+    /// </summary>
+    /// 
+    public void ApplyPreviewReadedKey(Func<ConsoleKeyInfo, bool> previewReadedKey)
+    {
+      previewReadedKeyStack.Push(this.previewReadedKey);
+      this.previewReadedKey = previewReadedKey;
+    }
+
+    /// <summary>
+    /// Drop a pushed function [by PushPreviewReadedKey()] for preview readed console key and a possibility to catch it.
+    /// 
+    /// Typical usage mode apply a new function [by ApplyPreviewReadedKey()] at 'Window.StartEditable()' for preview and process key types.
+    /// At the same time use a RestorePreviewReadedKey() at 'Window.StopEditable()'.
+    /// </summary>
+    public void RestorePreviewReadedKey() 
+    {
+      if (previewReadedKeyStack.Count == 0)
+      {
+        throw new IndexOutOfRangeException("VirtualConsole.DropPreviewReadedKey(): there isn't pushed 'previewReadedKey' function to drop it.");
+      }
+
+      this.previewReadedKey = previewReadedKeyStack.Pop();
+    }
+
+    private   Stack<Func<ConsoleKeyInfo, bool>>   previewReadedKeyStack    = new Stack<Func<ConsoleKeyInfo, bool>>();
+    private   Func<ConsoleKeyInfo, bool>          previewReadedKey         = null;                         // for application
+    internal  Func<ConsoleKeyInfo, bool>          previewReadedKeyInternal = null;                         // for ConsoleWindows
+
+    // ConsoleKey
 
     #endregion
 
@@ -222,11 +300,13 @@ namespace eMeL.ConsoleWindows
 
       if (! refreshWait)
       {
-        #if USE_refreshWaitTime
+        #if USE_refreshWait
+        #if USE_traceEnabled
         if (traceEnabled)
         {
           Trace.WriteLine(">> VirtualConsole.Refresh: [! refreshWait] " + lastChange.ToString());
         }
+        #endif
 
         refreshWait = true;                                                                       // Signal for thereafter Refresh requests. [to be notified Display() will call]
 
@@ -241,7 +321,7 @@ namespace eMeL.ConsoleWindows
         #else
         refreshWait = false;
         InternalDisplay();
-        #endif      
+        #endif
       }
     }
 
@@ -255,12 +335,14 @@ namespace eMeL.ConsoleWindows
         {
           lastRefresh = Environment.TickCount;                                                    // start time of refresh
 
+          #if USE_traceEnabled
           if (traceEnabled)
           {
             Trace.WriteLine(">> VirtualConsole.InternalDisplay: " + lastRefresh.ToString());
           }
+          #endif
 
-          Display();
+          Display();                                                                              // abstract class
         }
       }
     }
@@ -268,8 +350,9 @@ namespace eMeL.ConsoleWindows
 
     #region others
 
-    public static bool traceEnabled = false;
-
+    #if USE_traceEnabled
+    public static bool traceEnabled = true;
+    #endif
     #endregion
   }
 }
