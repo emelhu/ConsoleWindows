@@ -118,7 +118,7 @@ namespace ConsoleWindowsDemo
       textElement = new TextElement(10, 10, "Pressed key:", WinColor.Blue, WinColor.White);  
       conWin.rootWindow.AddElement(textElement);  
 
-      textElement = new TextElement(10, 24, 30, 1, WinColor.Red, WinColor.Yellow);  
+      textElement = new TextElement(10, 24, 40, 1, WinColor.Red, WinColor.Yellow);  
       conWin.rootWindow.AddElement(textElement);  
 
       con.ApplyPreviewReadedKey(consoleKeyInfo =>
@@ -127,10 +127,25 @@ namespace ConsoleWindowsDemo
 
             if (consoleKeyInfo.KeyChar != 0)
             {
-            text += consoleKeyInfo.KeyChar; 
+              text += consoleKeyInfo.KeyChar; 
             }
 
             text += "]";
+
+            if ((consoleKeyInfo.Modifiers & ConsoleModifiers.Alt) != 0)
+            {
+              text += " Alt";
+            }
+
+            if ((consoleKeyInfo.Modifiers & ConsoleModifiers.Shift) != 0)
+            {
+              text += " Shift";
+            }
+
+            if ((consoleKeyInfo.Modifiers & ConsoleModifiers.Control) != 0) 
+            {
+              text += " Ctrl";
+            }
 
             textElement.text = text;
         

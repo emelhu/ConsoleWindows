@@ -177,12 +177,113 @@ namespace eMeL.ConsoleWindows
             {
               ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
 
-              if (keyInfo.Key == ConsoleKey.Escape)
+              switch (keyInfo.Key)
               {
-                // TODO: ablak kilépési engedély vizsgálat
+                case ConsoleKey.Escape:
+                  // TODO: ablak kilépési engedély vizsgálat
+                  if (rootWindow.isRootWindow)
+                  {
+                    cancellationTokenSource.Cancel();
+                  }
+                  else
+                  {
 
-                cancellationTokenSource.Cancel();
-              }
+                  }
+                  break;
+
+                case ConsoleKey.F4:                                                               // Alt-F4
+                  if ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0)
+                  {
+                    // TODO: ablak kilépési engedély vizsgálat
+                    if (rootWindow.isRootWindow)
+                    {
+                      cancellationTokenSource.Cancel();
+                    }
+                    else
+                    {
+
+                    }
+                  }
+                  break;
+
+                case ConsoleKey.C:                                                                // ctrl-C
+                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)
+                  {
+                    // TODO: ablak kilépési engedély vizsgálat
+                    cancellationTokenSource.Cancel();
+                  }
+                  break;
+
+                case ConsoleKey.Enter:
+                case ConsoleKey.Tab:
+                  break;     
+                  
+                case ConsoleKey.Home:
+                  break;   
+                  
+                case ConsoleKey.End:
+                  break;      
+                  
+                case ConsoleKey.LeftArrow:
+                  break;         
+
+                case ConsoleKey.RightArrow:
+                  break;     
+
+                case ConsoleKey.UpArrow:
+                  break;  
+
+                case ConsoleKey.DownArrow:
+                  break;  
+                  
+                case ConsoleKey.PageUp:
+                  break;      
+
+                case ConsoleKey.PageDown:
+                  break;   
+
+                case ConsoleKey.Backspace:
+                  break;
+
+                case ConsoleKey.Delete:
+                  break;
+
+                case ConsoleKey.Insert:
+                  break;
+
+                case ConsoleKey.Clear:                                                            // shift-numpad5
+                case ConsoleKey.OemClear:
+                  break;
+
+                case ConsoleKey.Decimal:
+                case ConsoleKey.OemPeriod:
+                case ConsoleKey.OemComma:
+                  break;
+
+                case ConsoleKey.Subtract:
+                case ConsoleKey.OemMinus:
+                  break;
+
+                case ConsoleKey.Add:
+                case ConsoleKey.OemPlus:
+                  break;
+
+                case ConsoleKey.F1:                                                               // Help
+                  break;
+                
+                case ConsoleKey.F12:                                                              // Refresh display                
+                  if (((keyInfo.Modifiers & ConsoleModifiers.Shift)   != 0) ||
+                      ((keyInfo.Modifiers & ConsoleModifiers.Alt)     != 0) ||
+                      ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0))
+                  {
+                    virtualConsole.Display();                                                     // immediate
+                  }
+                  else
+                  {
+                    virtualConsole.Refresh();                                                     // request
+                  }                 
+                  break;                
+              }              
             }
           }
         }, cancellationToken);
@@ -216,6 +317,11 @@ namespace eMeL.ConsoleWindows
       if (this.virtualConsole != null)
       {
         this.virtualConsole = null;
+      }
+
+      if (this.rootWindow != null)
+      {
+        this.rootWindow = null;
       }
     }
     #endregion

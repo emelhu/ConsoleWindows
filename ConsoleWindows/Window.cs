@@ -15,17 +15,17 @@ namespace eMeL.ConsoleWindows
   {
     #region data
 
-    public  TViewModel viewModel   { get; private set; }
+    public    TViewModel viewModel   { get; private set; }
 
-    public  Window<IViewModel> parentWindow
+    public    Window<IViewModel>  parentWindow
     {
       get           { return _parentWindow; }
 
       internal set  { _parentWindow = value; }      
     }
-    private Window<IViewModel> _parentWindow;
+    private   Window<IViewModel> _parentWindow;
 
-    public  ConsoleWindows     consoleWindows
+    public    ConsoleWindows      consoleWindows
     {
       get
       {
@@ -42,7 +42,7 @@ namespace eMeL.ConsoleWindows
         return null;                                                                              // Not found
       }
     }
-    internal ConsoleWindows _consoleWindows { get; set; }
+    internal  ConsoleWindows     _consoleWindows { get; set; }
 
     public bool isRootWindow
     {
@@ -58,6 +58,8 @@ namespace eMeL.ConsoleWindows
         return (_consoleWindows != null);
       }
     } 
+
+    public IElement           actualElement { get; private set; }
     
     #endregion
 
@@ -375,36 +377,145 @@ namespace eMeL.ConsoleWindows
 
     #region field step / proceed
 
-    public void ProceedFirstField()
+    public IElement GetFirstElement()
     {
+      actualElement = null;
+
       if (state == State.Editable)
       { // Appoint first field of window.
-
+        foreach (var element in elements)
+        {
+          if (element is IElement)
+          {
+            actualElement = element as IElement;
+            break;
+          }
+        }        
       }
+
+      return actualElement;
     }
 
-    public void ProceedField(bool next = true)
+    public IElement GetLastElement()
     {
+      actualElement = null;
 
+      if (state == State.Editable)
+      { // Appoint last field of window.
+        foreach (var element in elements)
+        {
+          if (element is IElement)
+          {
+            actualElement = element as IElement;
+          }
+        }        
+      }      
+
+      return actualElement;
     }
 
-    public void ProceedLastField()
+    public IElement GetElement(bool nextElement = true)
     {
+      if (state == State.Editable)
+      { // Appoint prev/next field of window.
+        if (actualElement == null)
+        {
+          return GetFirstElement();
+        }
 
+
+        bool found = false;
+
+        if (nextElement)
+        {
+          foreach (var element in elements)
+          {
+            if (found)
+            {
+              if (element is IElement)
+              {
+                actualElement = element as IElement;
+                break;
+              }
+            }
+            else
+            {
+              found = (element == actualElement);
+            }
+          }
+        }
+        else
+        { // prev
+          IElement prevElement = null;
+
+          foreach (var element in elements)
+          {
+            if (element == actualElement)
+            {
+              found         = (prevElement != null);
+              actualElement = prevElement;
+
+              break;
+            }
+
+            if (element is IElement)
+            {
+              prevElement = element as IElement;
+            }            
+          }
+        } 
+        
+
+        if (! found)
+        {
+          GetFirstElement();
+        }          
+      }  
+      else
+      {
+        actualElement = null;
+      }
+      
+
+      return actualElement;
     }
-
     #endregion
 
     #region actions
 
-    public Action StartEditable             { get; set; }
-    public Action StopEditable              { get; set; }
+    /// <summary>
+    /// This action fired when state of window changed (this window is the actual window and it's editable)
+    /// example:
+    /// StartEditable = (win) => { StartEditableHappen(win); };
+    /// </summary>
+    public Action<Window<TViewModel>> StartEditable             { get; set; }
+
+    /// <summary>
+    /// This action fired when state of window changed (this window is the actual window and it's not editable already or state changed from editable)
+    /// example:
+    /// StopEditable = (win) => { StopEditableHappen(win); };
+    /// </summary>
+    public Action<Window<TViewModel>> StopEditable              { get; set; }
+
+    /// <summary>
+    /// This action fired when state of window changed (this window is visible in display)
+    /// example:
+    /// StartVisible = (win) => { StartVisibleHappen(win); };
+    /// </summary>
+    public Action<Window<TViewModel>> StartVisible              { get; set; }
+
+    /// <summary>
+    /// This action fired when state of window changed (this window is not visible in display)
+    /// example:
+    /// StopVisible = (win) => { StopVisibleHappen(win); };
+    /// </summary>
+    public Action<Window<TViewModel>> StopVisible               { get; set; }
 
     /// <summary>
     /// Define a function for validate content of Window.
     /// It returns a null if no error, or an error text.
     /// </summary>
-    public Func<Window<IViewModel>, string> validate  { get; set; }
+    public Func<Window<IViewModel>, string> validate            { get; set; }
 
     #endregion
 
