@@ -48,7 +48,7 @@ namespace eMeL.ConsoleWindows
 
   public interface IViewModel
   {
-    event ChangedEventHandler Changed;
+    event ChangedEventHandler changed;
 
     void                      IndicateChange();
   }
@@ -58,6 +58,17 @@ namespace eMeL.ConsoleWindows
     void Init(VirtualConsole virtualConsole);
 
     IPosition Clicked();
+  }
+
+  public interface IScrollbarInfo
+  {
+    bool    upArrowVisible        { get; set; }
+    bool    downArrowVisible      { get; set; }
+    int?    verticalPosition      { get; set; }
+
+    bool    leftArrowVisible      { get; set; }
+    bool    rightArrowVisible     { get; set; }
+    int?    horizontalPosition    { get; set; }
   }
 }
 

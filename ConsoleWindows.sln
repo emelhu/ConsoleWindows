@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ConsoleWindows", "ConsoleWindows\ConsoleWindows.xproj", "{931383EE-0652-4301-89AB-27D1BED4C8B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleWindows", "ConsoleWindows\ConsoleWindows.csproj", "{931383EE-0652-4301-89AB-27D1BED4C8B4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ConsoleWindows.Core", "CoreVirtualConsole\ConsoleWindows.Core.xproj", "{CB3540B1-0423-408A-B3B3-82BAC94A60D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreVirtualConsole", "CoreVirtualConsole\CoreVirtualConsole.csproj", "{CB3540B1-0423-408A-B3B3-82BAC94A60D5}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ConsoleWindowsDemo", "ConsoleWindowsDemo\ConsoleWindowsDemo.xproj", "{F3FEFD35-D1AB-4429-A010-09D307968D16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleWindowsDemo", "ConsoleWindowsDemo\ConsoleWindowsDemo.csproj", "{F3FEFD35-D1AB-4429-A010-09D307968D16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

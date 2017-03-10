@@ -153,8 +153,6 @@ namespace ConsoleWindowsDemo
           });
 
       conWin.Start();
-
-      int dummy = 0;
     }
 
     public static void BorderAndAreaTest1()
@@ -183,23 +181,7 @@ namespace ConsoleWindowsDemo
 
       conWin.rootWindow.AddElement(new TextElement(20, 4, "...press Escape to end..."));
 
-      //
-
-      Console.SetCursorPosition(12, 40);
-
-      ConsoleKeyInfo keyInfo;
-
-      do
-      { 
-        if (Console.KeyAvailable)
-        {
-          keyInfo = Console.ReadKey();
-        }
-        else
-        {
-          Thread.Sleep(100);
-        }
-      } while (keyInfo.Key != ConsoleKey.Escape);
+      conWin.Start();
     }
 
     public static void ViewAndCangeTest1()
@@ -209,6 +191,8 @@ namespace ConsoleWindowsDemo
 
       var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
+
+      conWin.Start(false);
 
       var region = new Region(3, 10, 10, 10, WinColor.Cyan, WinColor.Green);
       var area   = new Area(  6, 20, 10, 15, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFramePattern1));
@@ -243,26 +227,11 @@ namespace ConsoleWindowsDemo
 
       Thread.Sleep(3000);
 
-      //
-
-      int count = 0;
-      ConsoleKeyInfo keyInfo;
-
-      do
-      { 
-        Console.SetCursorPosition(0, 23);
-        
-        if (Console.KeyAvailable)
-        {
-          keyInfo = Console.ReadKey();
-        }
-        else
-        {
-          Thread.Sleep(1000);
-
-          textElement4.text = (++count).ToString();
-        }
-      } while (keyInfo.Key != ConsoleKey.Escape);
+      for (int i = 0; i < 100; i++)
+      {
+        textElement4.text = (i).ToString();
+        Thread.Sleep(1000);
+      }      
     }
   }
 }

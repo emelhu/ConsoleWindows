@@ -182,8 +182,8 @@ namespace eMeL.ConsoleWindows
     {
       Debug.Assert(pos >= 0);
       Debug.Assert(len >  0);
-      Debug.Assert(pos         < this.rows * this.cols);
-      Debug.Assert((pos + len) < this.rows * this.cols);
+      Debug.Assert(pos         <  this.rows * this.cols);
+      Debug.Assert((pos + len) <= this.rows * this.cols);
 
       var part = new char[len];
 

@@ -344,7 +344,7 @@ namespace eMeL.ConsoleWindows
     public State state
     {
       get { return _state; }
-      set { _state = value; ProceedFirstField(); }
+      set { _state = value; GetFirstElement(); }
     }
     private State _state;
 

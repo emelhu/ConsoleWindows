@@ -115,6 +115,111 @@ namespace eMeL.ConsoleWindows
         {
           this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, text, partInfo.foreground, partInfo.background);
         }
+
+        if (partInfo.border != null) 
+        {
+          var border = (Border)partInfo.border;
+
+          if (border.isVisible())
+          {
+            int lastCol     = partInfo.col + partInfo.width  - 1; 
+            int lastRow     = partInfo.row + partInfo.height - 1;
+            var foreground  = border.foreground == WinColor.None ? partInfo.foreground : border.foreground;
+            var background  = border.background == WinColor.None ? partInfo.background : border.background;
+
+
+            if (border.topLeft != '\0')
+            {
+              this.virtualConsole.Write(partInfo.row, partInfo.col, border.topLeft.ToString(),      foreground, background);
+            }
+
+            if (border.topRight != '\0')
+            {
+              this.virtualConsole.Write(partInfo.row, lastCol,      border.topRight.ToString(),     foreground, background);
+            }
+
+            if (border.bottomLeft != '\0')
+            {
+              this.virtualConsole.Write(lastRow,      partInfo.col, border.bottomLeft.ToString(),   foreground, background);
+            }
+
+            if (border.bottomRight != '\0')
+            {
+              this.virtualConsole.Write(lastRow,      lastCol,      border.bottomRight.ToString(),  foreground, background);
+            }
+
+            if ((border.top != '\0') && (partInfo.width > 2))
+            {
+              var line = new string(border.top, partInfo.width - 2);
+
+              this.virtualConsole.Write(partInfo.row, partInfo.col + 1,   line,                     foreground, background);
+            }
+
+            if ((border.bottom != '\0') && (partInfo.width > 2))
+            {
+              var line = new string(border.bottom, partInfo.width - 2);
+
+              this.virtualConsole.Write(lastRow,      partInfo.col + 1,   line,                     foreground, background);
+            }
+
+            if ((border.left != '\0') && (partInfo.height > 2))
+            {
+              for (int rowLoop = 1; rowLoop < partInfo.height - 1; rowLoop++)
+              {
+                this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, border.left.ToString(), foreground, background);
+              }
+            }
+
+            if ((border.right != '\0') && (partInfo.height > 2))
+            {
+              for (int rowLoop = 1; rowLoop < partInfo.height - 1; rowLoop++)
+              {
+                this.virtualConsole.Write(partInfo.row + rowLoop, lastCol, border.right.ToString(),     foreground, background);
+              }
+            }
+          }
+        }
+
+        if ((partInfo.scrollbars != null) && (partInfo.scrollbarsInfo != null) && (partInfo.width >= 4) && (partInfo.height >= 4))
+        {
+          var scrollbars      = (Scrollbars)partInfo.scrollbars;
+          var scrollbarsInfo  = partInfo.scrollbarsInfo;
+
+          int lastCol     = partInfo.col + partInfo.width  - 1; 
+          int lastRow     = partInfo.row + partInfo.height - 1;
+          var foreground  = scrollbars.foreground == WinColor.None ? partInfo.foreground : scrollbars.foreground;
+          var background  = scrollbars.background == WinColor.None ? partInfo.background : scrollbars.background;
+
+          if (scrollbarsInfo.leftArrowVisible  && (scrollbars.horizontalLeft  != '\0'))
+          {
+            // TODO
+          }
+          
+          if (scrollbarsInfo.rightArrowVisible && (scrollbars.horizontalRight != '\0'))
+          {
+            // TODO
+          }
+
+          if (scrollbarsInfo.upArrowVisible    && (scrollbars.verticalUp      != '\0'))
+          {
+            // TODO
+          }
+
+          if (scrollbarsInfo.downArrowVisible  && (scrollbars.verticalBottom  != '\0'))
+          {
+            // TODO
+          }
+
+          if ((scrollbarsInfo.horizontalPosition != null) && (scrollbars.horizontalLine != '\0') && (partInfo.width >= 5))
+          {
+            // TODO
+          }
+
+          if ((scrollbarsInfo.verticalPosition   != null) && (scrollbars.verticalLine   != '\0') && (partInfo.height >= 5))
+          {
+            // TODO
+          }
+        }
       }
       else if (partInfo.height == 1)
       { // Only one line

@@ -8,13 +8,13 @@ namespace eMeL.ConsoleWindows
   public class RootWindowViewModel : IViewModel
   {
     #region IViewModel implementation
-    public event ChangedEventHandler Changed;
+    public event ChangedEventHandler changed;
 
     public void IndicateChange()
     {
-      if (Changed != null)
+      if (changed != null)
       {
-        Changed(this);                                                                            // aka: Changed?.Invoke(this);
+        changed(this);                                                                            // aka: Changed?.Invoke(this);
       }
     }
     #endregion
