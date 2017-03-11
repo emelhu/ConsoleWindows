@@ -59,7 +59,24 @@ namespace eMeL.ConsoleWindows
       }
     } 
 
-    public IElement           actualElement { get; private set; }
+
+    public IElement actualElement 
+      { 
+        get
+        {
+          return _actualRegion as IElement;
+        }
+      }
+
+    public Window<IViewModel> actualChildWindow 
+      { 
+        get
+        {
+          return _actualRegion as Window<IViewModel>;
+        }
+      }
+
+    private IRegion _actualRegion;
     
     #endregion
 
@@ -90,7 +107,7 @@ namespace eMeL.ConsoleWindows
         throw new ArgumentException("The 'viewModel' must an IViewModel successor!", nameof(this.viewModel));
       }
 
-      state = State.Editable;                                                                     // default state
+      state = State.Editable;                                                                     // default state      
     }
     
     public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
@@ -337,22 +354,32 @@ namespace eMeL.ConsoleWindows
     {
       Killed    = 0,
       Hide      = 1,
-      ReadOnly  = 2,
+      ViewOnly  = 2,
       Editable  = 3
     }
 
     public State state
     {
       get { return _state; }
-      set { _state = value; GetFirstElement(); }
+      set { _state = value; ToFirstItem(); }
     }
     private State _state;
+
+    private bool VisibleState()
+    {
+      return ((state == State.Editable) || (state == State.ViewOnly));
+    }
+
+    private bool EditableState()
+    {
+      return (state == State.Editable);
+    }
 
     public  bool  isVisible
     {
       get
       {
-        if ((state == State.Hide) || (state == State.Killed))
+        if (! VisibleState())
         {
           return false;
         }
@@ -361,7 +388,7 @@ namespace eMeL.ConsoleWindows
         {
           if (isRootWindow)
           {
-            return (state != State.Hide) && (state != State.Killed);
+            return VisibleState();
           }
 
           return false;                                                                           // Orphan window, haven't a valid root window
@@ -377,50 +404,104 @@ namespace eMeL.ConsoleWindows
 
     #region field step / proceed
 
-    public IElement GetFirstElement()
+    private bool IsItemApplicable(IRegion region)
     {
-      actualElement = null;
-
-      if (state == State.Editable)
-      { // Appoint first field of window.
-        foreach (var element in elements)
+      if (region is IElement)  
+      {            
+        return true;
+      }
+      else if (region is Window<IViewModel> window)
+      {
+        if (window.EditableState())
         {
-          if (element is IElement)
-          {
-            actualElement = element as IElement;
-            break;
-          }
-        }        
+          return true;
+        }
       }
 
-      return actualElement;
+      return false;
     }
 
-    public IElement GetLastElement()
+    /// <summary>
+    /// Check element/window validity.
+    /// </summary>
+    /// <param name="region">Element or window to check.</param>
+    /// <returns>Error text or null if valid.</returns>
+    private string IsItemValid(IRegion region)
     {
-      actualElement = null;
+      if (region != null)
+      {
+        if (region is IElement element)
+        {
+          return element.IsValid();
+        }
+        else if (region is Window<IViewModel> window)
+        {
+          return window.IsValid();
+        }
+      }
+
+      return false;
+    }
+
+    private bool IsValid()
+    {
+      foreach (var region in elements)
+      {
+        if (! IsItemValid(region))
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    public void ToFirstItem()
+    {
+      _actualRegion = null;
 
       if (state == State.Editable)
-      { // Appoint last field of window.
-        foreach (var element in elements)
+      { // Appoint first item of window.
+        foreach (var region in elements)
         {
-          if (element is IElement)
-          {
-            actualElement = element as IElement;
-          }
+          if (IsItemApplicable(region))  
+          {            
+            _actualRegion = region;
+            break;
+          }         
         }        
-      }      
-
-      return actualElement;
+      }
     }
 
-    public IElement GetElement(bool nextElement = true)
+    public void ToLastItem()
+    {
+      _actualRegion = null;
+
+      if (state == State.Editable)
+      { // Appoint last item of window.
+        foreach (var region in elements)
+        {
+          if (IsItemApplicable(region))  
+          {      
+            if (! IsItemValid(_actualRegion))
+            {
+              return;
+            }
+           
+            _actualRegion = region;
+          }          
+        }        
+      }      
+    }
+
+    public void ToNextItem(bool nextElement = true)
     {
       if (state == State.Editable)
       { // Appoint prev/next field of window.
-        if (actualElement == null)
+        if (_actualRegion == null)
         {
-          return GetFirstElement();
+          ToFirstItem();
+          return;
         }
 
 
@@ -428,39 +509,44 @@ namespace eMeL.ConsoleWindows
 
         if (nextElement)
         {
-          foreach (var element in elements)
+          foreach (var region in elements)
           {
             if (found)
             {
-              if (element is IElement)
+              if (IsItemApplicable(region))  
               {
-                actualElement = element as IElement;
+                if (! IsItemValid(_actualRegion))
+                {
+                  return;
+                }
+         
+                _actualRegion = region;
                 break;
               }
             }
             else
             {
-              found = (element == actualElement);
+              found = (region == _actualRegion);
             }
           }
         }
         else
         { // prev
-          IElement prevElement = null;
+          IRegion prevRegion = null;
 
-          foreach (var element in elements)
+          foreach (var region in elements)
           {
-            if (element == actualElement)
+            if (region == _actualRegion)
             {
-              found         = (prevElement != null);
-              actualElement = prevElement;
+              found         = (prevRegion != null);
+              _actualRegion = prevRegion;
 
               break;
             }
 
-            if (element is IElement)
+            if (IsItemApplicable(region))  
             {
-              prevElement = element as IElement;
+              prevRegion = region;
             }            
           }
         } 
@@ -468,16 +554,13 @@ namespace eMeL.ConsoleWindows
 
         if (! found)
         {
-          GetFirstElement();
+          ToFirstItem();
         }          
       }  
       else
       {
-        actualElement = null;
+        _actualRegion = null;
       }
-      
-
-      return actualElement;
     }
     #endregion
 
@@ -488,34 +571,36 @@ namespace eMeL.ConsoleWindows
     /// example:
     /// StartEditable = (win) => { StartEditableHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> StartEditable             { get; set; }
+    public Action<Window<TViewModel>> startEditable             { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is the actual window and it's not editable already or state changed from editable)
     /// example:
     /// StopEditable = (win) => { StopEditableHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> StopEditable              { get; set; }
+    public Action<Window<TViewModel>> stopEditable              { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is visible in display)
     /// example:
     /// StartVisible = (win) => { StartVisibleHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> StartVisible              { get; set; }
+    public Action<Window<TViewModel>> startVisible              { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is not visible in display)
     /// example:
     /// StopVisible = (win) => { StopVisibleHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> StopVisible               { get; set; }
+    public Action<Window<TViewModel>> stopVisible               { get; set; }
 
     /// <summary>
     /// Define a function for validate content of Window.
     /// It returns a null if no error, or an error text.
     /// </summary>
     public Func<Window<IViewModel>, string> validate            { get; set; }
+
+    public Func<Window<IViewModel>, bool> closeable             { get; set; }
 
     #endregion
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -27,7 +28,6 @@ namespace eMeL.ConsoleWindows
     public int cols { get { return virtualConsole.cols; } }
     
     public Window<IViewModel> actualWindow  { get; private set; }
-    public IElement           actualElement { get; private set; }
 
     #endregion
 
@@ -64,7 +64,14 @@ namespace eMeL.ConsoleWindows
 
       rootWindow._consoleWindows = this;                                                          // Only in root filled. (All window can seek it by recursive way... it's good for freedom of attach/detach/orphan windows)
 
-      actualWindow = rootWindow;     
+      actualWindow = rootWindow;        
+      actualWindow.ToFirstItem();
+
+      while (actualWindow.actualChildWindow != null)
+      {
+        actualWindow = actualWindow.actualChildWindow;
+        actualWindow.ToFirstItem();
+      }
     }
     
     #endregion
@@ -265,6 +272,39 @@ namespace eMeL.ConsoleWindows
 
     #region Start/Process
 
+    static string defaultCtrlC_Question = "Indeed interrupts the program run?";
+
+    private void ExitWindowProcess()
+    {
+      Debug.Assert(actualWindow != null);
+
+      bool closeable = true;
+
+      if (actualWindow.closeable != null)
+      {
+        closeable = actualWindow.closeable(actualWindow);
+      }
+
+      if (closeable)
+      {
+        if (actualWindow.isRootWindow)
+        { 
+          cancellationTokenSource.Cancel();
+        }
+        else
+        {
+          if (actualWindow.parentWindow == null)
+          {
+            throw new NullReferenceException("");
+          }
+
+          actualWindow.state = Window<IViewModel>.State.Hide;
+          actualWindow = actualWindow.parentWindow;
+          actualWindow.ToFirstItem();
+        }
+      }      
+    }
+
     private CancellationTokenSource cancellationTokenSource;
 
     public void Start(bool wait = true)
@@ -276,6 +316,24 @@ namespace eMeL.ConsoleWindows
         {
           while (! cancellationToken.IsCancellationRequested)
           {
+            Debug.Assert(actualWindow != null);
+
+            while (! actualWindow.isVisible)
+            { // correction
+              if (actualWindow.isRootWindow)
+              {
+                if (! actualWindow.isVisible)
+                {
+                  actualWindow.state = Window<IViewModel>.State.ViewOnly;                         // correction
+                }
+
+                break;
+              }
+
+              actualWindow = actualWindow.parentWindow;
+            }
+
+
             ConsoleKeyInfo? keyInfoNullable = this.virtualConsole.ReadKeyEx(cancellationToken);
 
             if (keyInfoNullable != null)
@@ -285,92 +343,130 @@ namespace eMeL.ConsoleWindows
               switch (keyInfo.Key)
               {
                 case ConsoleKey.Escape:
-                  // TODO: ablak kilépési engedély vizsgálat
-                  if (rootWindow.isRootWindow)
-                  {
-                    cancellationTokenSource.Cancel();
-                  }
-                  else
-                  {
-
-                  }
+                  ExitWindowProcess();
                   break;
 
                 case ConsoleKey.F4:                                                               // Alt-F4
                   if ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0)
                   {
-                    // TODO: ablak kilépési engedély vizsgálat
-                    if (rootWindow.isRootWindow)
-                    {
-                      cancellationTokenSource.Cancel();
-                    }
-                    else
-                    {
-
-                    }
+                    ExitWindowProcess();
                   }
                   break;
 
                 case ConsoleKey.C:                                                                // ctrl-C
                   if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)
                   {
-                    // TODO: ablak kilépési engedély vizsgálat
-                    cancellationTokenSource.Cancel();
+                    if (AskBool(defaultCtrlC_Question))
+                    {
+                      cancellationTokenSource.Cancel();
+                    }
                   }
                   break;
 
                 case ConsoleKey.Enter:
                 case ConsoleKey.Tab:
+                  actualWindow.ToNextItem(((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0));   // Shift-tab to previous item             
+                  AfterElementPositioning();
                   break;     
                   
                 case ConsoleKey.Home:
+                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0)                        // Ctrl-Home: to first item
+                  {
+                    actualWindow.ToFirstItem();
+                    AfterElementPositioning();
+                  }
+                  else                                                                            // Home: first character in edit field
+                  {
+                    // TODO     
+                  }     
                   break;   
                   
                 case ConsoleKey.End:
+                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0)                        // Ctrl-End: to last item
+                  {
+                    actualWindow.ToLastItem();
+                    AfterElementPositioning();
+                  }
+                  else                                                                            // Home: last character in edit field
+                  {
+                    // TODO    
+                  }  
                   break;      
                   
-                case ConsoleKey.LeftArrow:
+                case ConsoleKey.LeftArrow:                                                        // to left character in edit field
+                  // TODO
                   break;         
 
-                case ConsoleKey.RightArrow:
+                case ConsoleKey.RightArrow:                                                       // to right character in edit field
+                  // TODO
                   break;     
 
-                case ConsoleKey.UpArrow:
+                case ConsoleKey.UpArrow:                                                          // to previous line in multiline edit field
+                  // TODO  
                   break;  
 
-                case ConsoleKey.DownArrow:
+                case ConsoleKey.DownArrow:                                                        // to next line in multiline edit field
+                  // TODO  
                   break;  
                   
                 case ConsoleKey.PageUp:
+                  bool multilineEditElement = false;  // TODO
+
+                  if (multilineEditElement)
+                  {
+                    // TODO: if multiline edit
+                  }
+                  else
+                  {
+                    actualWindow.ToFirstItem();
+                    AfterElementPositioning();
+                  }
                   break;      
 
                 case ConsoleKey.PageDown:
+                  bool multilineEditElement2 = false;  // TODO
+
+                  if (multilineEditElement2)
+                  {
+                    // TODO: if multiline edit
+                  }
+                  else
+                  {
+                    actualWindow.ToLastItem();
+                    AfterElementPositioning();
+                  }
                   break;   
 
-                case ConsoleKey.Backspace:
+                case ConsoleKey.Backspace:                                                        // delete previous character of edit field
+                  DisplayMessage(null, MessageType.error);
                   break;
 
-                case ConsoleKey.Delete:
+                case ConsoleKey.Delete:                                                           // delete actual character of edit field
+                  DisplayMessage(null, MessageType.error);
                   break;
 
-                case ConsoleKey.Insert:
+                case ConsoleKey.Insert:                                                           // insert a blank character of edit field
+                  DisplayMessage(null, MessageType.error);
                   break;
 
                 case ConsoleKey.Clear:                                                            // shift-numpad5
-                case ConsoleKey.OemClear:
+                case ConsoleKey.OemClear:                                                         // clear content of field
+                  DisplayMessage(null, MessageType.error);
                   break;
 
                 case ConsoleKey.Decimal:
                 case ConsoleKey.OemPeriod:
-                case ConsoleKey.OemComma:
+                case ConsoleKey.OemComma:                                                         // change part of real number (integer <--> decimal)
                   break;
 
-                case ConsoleKey.Subtract:
+                case ConsoleKey.Subtract:                                                         // change to negative presage (integer/real field)
                 case ConsoleKey.OemMinus:
+                  DisplayMessage(null, MessageType.error);
                   break;
 
-                case ConsoleKey.Add:
+                case ConsoleKey.Add:                                                              // change to positive presage (integer/real field)
                 case ConsoleKey.OemPlus:
+                  DisplayMessage(null, MessageType.error);
                   break;
 
                 case ConsoleKey.F1:                                                               // Help
@@ -407,6 +503,248 @@ namespace eMeL.ConsoleWindows
       }
     }
 
+    private void AfterElementPositioning()
+    {
+      while (actualWindow.actualChildWindow != null)
+      {
+        actualWindow = actualWindow.actualChildWindow;        
+      }
+
+      if (actualWindow.actualElement != null)
+      {
+        DisplayMessage(actualWindow.actualElement.description, MessageType.description);
+
+        string errorMessage = actualWindow.actualElement.IsValid();
+
+        if (! String.IsNullOrWhiteSpace(errorMessage))
+        {
+          DisplayMessage(errorMessage, MessageType.error);
+        }
+      }
+    }
+    #endregion
+
+    #region Asks & messages & communication
+                                          
+    public static string defaultTrueText  = "yes";
+    public static string defaultFalseText = "no";
+
+    public        string trueText         = defaultTrueText;
+    public        string falseText        = defaultFalseText;
+                                               
+    public bool AskBool(string message, string trueText = null, string falseText = null)
+    {
+      trueText  = trueText  ?? this.trueText;
+      falseText = falseText ?? this.falseText;
+
+      // TODO
+
+      return false;     // TODO
+    }
+
+    public enum MessageType
+    {
+      description,
+      message,
+      error, 
+      ask
+    }   
+
+    public AnswerDisplayInfo? DisplayMessage(string message, MessageType messageType = MessageType.message, int askLength = 0, bool? useErrorLine = null)    
+    {
+      int       dispRow;
+      WinColor  background;
+      WinColor  foreground;      
+
+      switch (messageType)
+      {
+        case MessageType.description:
+          dispRow     = (useErrorLine ?? false) ? errorTextLine : descriptionTextLine;
+          background  = descriptionBackground;
+          foreground  = descriptionForeground;
+          break;
+
+        case MessageType.error:
+          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
+          background  = errorBackground;
+          foreground  = errorForeground;
+          break;
+
+        case MessageType.ask:
+          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
+          background  = questionBackground;
+          foreground  = questionForeground;
+          break;
+
+        case MessageType.message:
+          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
+          background  = messageBackground;
+          foreground  = messageForeground;
+          break;
+
+        default:
+          throw new ArgumentException("DisplayMessage(): Invalid MessageType parameter!", nameof(messageType));
+      }
+
+      int backWidth   = VirtualConsole.maxCols;  
+      int leftMargin  = 0;                                                                  // TODO: !
+      int rightMargin = 0;                                                                  // TODO: !  
+
+      backWidth -= (leftMargin + rightMargin);     
+
+      if (message == null)
+      { // Clear message
+        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), WinColor.None, WinColor.None);
+
+        return null;
+      }
+      else
+      {
+        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), foreground, background);
+
+        message = message.Trim();
+
+        if (messageType == MessageType.ask)
+        {
+          askLength = Math.Min(Math.Max(askLength, 1), 12);
+
+          int freeSpace = (backWidth - askLength) - message.Length;
+
+          if (freeSpace > 2)
+          {
+            message += " : ";
+          }
+          else if (freeSpace > 1)
+          {
+            message += ": ";
+          }
+          else if (freeSpace > 0)
+          {
+            message += ":";
+          }
+
+          if (message.Length > (backWidth - askLength))
+          {
+            message = message.Substring(0, (backWidth - askLength));
+          }
+
+          int displayPosition = (backWidth - askLength - message.Length) / 2;          
+        
+          var answerInfo = new AnswerDisplayInfo(dispRow, leftMargin + displayPosition + message.Length, askLength, foreground, background);  
+          this.virtualConsole.Write(dispRow, leftMargin + displayPosition, message, foreground, background);
+          DisplayAnswer(ref answerInfo);
+          
+          return answerInfo;
+        }
+        else
+        {
+          if (message.Length < backWidth)
+          {
+            string padText = new string(' ', (backWidth - message.Length) / 2);
+
+            message = padText + message + padText;
+
+            if (message.Length < backWidth)
+            {
+              message += ' ';
+            }
+          }
+
+          if (message.Length > backWidth)
+          {
+            message = message.Substring(0, backWidth);
+          }          
+        }        
+      }
+
+      this.virtualConsole.Write(dispRow, leftMargin + ((backWidth - message.Length) / 2), message, foreground, background);
+
+      return null;
+    }
+
+    private void DisplayAnswer(ref AnswerDisplayInfo answerInfo)
+    {
+      this.virtualConsole.Write(answerInfo.row, answerInfo.col, answerInfo.fulltext, answerInfo.foreground, answerInfo.background);
+    }
+
+    public struct AnswerDisplayInfo
+    {
+      public int      row; 
+      public int      col; 
+      public int      len;
+      public string   text;
+      public char     placeholder;
+      public WinColor background;
+      public WinColor foreground;      
+
+      public AnswerDisplayInfo(int row, int col, int len, WinColor foreground, WinColor background)
+      {
+        this.row          = row; 
+        this.col          = col; 
+        this.len          = len;
+        this.text         = String.Empty;
+        this.placeholder  = '□';
+        this.background   = background;
+        this.foreground   = foreground;
+      }
+
+      public string fulltext
+      {
+        get
+        {
+          if (String.IsNullOrEmpty(text))
+          {
+            text = String.Empty;
+          }
+
+          return text + new string(this.placeholder, this.len - text.Length);
+        }
+      }
+    }
+
+    #region common
+
+    #region description
+    public static WinColor  defaultDescriptionBackground  = WinColor.DarkGray;
+    public static WinColor  defaultDescriptionForeground  = WinColor.White;
+
+    public        WinColor  descriptionBackground         = defaultDescriptionBackground;
+    public        WinColor  descriptionForeground         = defaultDescriptionForeground;
+
+    public static int       defaultDescriptionTextLine    = VirtualConsole.maxRows - 2;
+    public        int       descriptionTextLine           = defaultDescriptionTextLine;
+    #endregion
+
+    #region error/message/question
+    public static WinColor  defaultErrorBackground        = WinColor.Yellow;
+    public static WinColor  defaultErrorForeground        = WinColor.Red;
+   
+    public        WinColor  errorBackground               = defaultErrorBackground;
+    public        WinColor  errorForeground               = defaultErrorForeground;
+
+    public static WinColor  defaultMessageBackground      = WinColor.Gray;
+    public static WinColor  defaultMessageForeground      = WinColor.Yellow;
+   
+    public        WinColor  messageBackground             = defaultMessageBackground;
+    public        WinColor  messageForeground             = defaultMessageForeground;
+
+    public static WinColor  defaultQuestionBackground     = WinColor.Gray;
+    public static WinColor  defaultQuestionForeground     = WinColor.Green;
+   
+    public        WinColor  questionBackground            = defaultQuestionBackground;
+    public        WinColor  questionForeground            = defaultQuestionForeground;
+                                                           
+    public static int       defaultErrorTextLine          = VirtualConsole.maxRows - 1;
+    public        int       errorTextLine                 = defaultErrorTextLine;
+    #endregion
+
+    #region message texts
+    public static string    defaultErrorText_Empty        = "Do not leave empty this element!";
+    public        string    errorText_Empty               = defaultErrorText_Empty;
+    #endregion
+
+    #endregion
+
     #endregion
 
     #region IDisposable implementation
@@ -429,7 +767,7 @@ namespace eMeL.ConsoleWindows
         this.rootWindow = null;
       }
     }
-    #endregion
+    #endregion    
   }
 }
 

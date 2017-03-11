@@ -176,10 +176,13 @@ namespace ConsoleWindowsDemo
       var region = new Region(3, 3, 3, 3, WinColor.Cyan,    WinColor.Green);
       var area   = new Area(  6, 6, 6, 6, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFrameSingle));
 
+      var area2  = new Area( 10, 20, 20, 8, WinColor.None, WinColor.None, new Border(Border.defaultBorderFrameVertDoubleHorSingle));
+
       conWin.rootWindow.AddElement(region);
       conWin.rootWindow.AddElement(area);
+      conWin.rootWindow.AddElement(area2);
 
-      conWin.rootWindow.AddElement(new TextElement(20, 4, "...press Escape to end..."));
+      conWin.rootWindow.AddElement(new TextElement(23, 30, "...press Escape to end..."));
 
       conWin.Start();
     }

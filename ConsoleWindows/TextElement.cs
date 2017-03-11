@@ -26,7 +26,11 @@ namespace eMeL.ConsoleWindows
     /// Define a function for validate content of TextElement.
     /// It returns a null if no error, or an error text.
     /// </summary>
-    public Func<IElement, string> validate { get; set; }
+    public Func<IElement, string> validate  { get; set; }
+
+    public bool   emptyEnabled              { get; set; } = true;
+
+    public string description               { get; set; }
 
     #region constructors
 
@@ -148,6 +152,24 @@ namespace eMeL.ConsoleWindows
       }
     }
 
+    /// <summary>
+    /// Check this element validity.
+    /// </summary>
+    /// <returns>Error text or null if valid.</returns>
+    public string IsValid()
+    {
+      if (! emptyEnabled && ! string.IsNullOrWhiteSpace(text))
+      {
+        return ConsoleWindows.errorText_Empty;                                                    // Do not leave empty this element!
+      }
+
+      if (validate != null)
+      {
+        return validate(this);
+      }
+
+      return null;                                                                                // This element is valid
+    }
     #endregion
   }
 }
