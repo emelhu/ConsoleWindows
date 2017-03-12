@@ -19,14 +19,16 @@ namespace eMeL.ConsoleWindows
     int       height      { get; set; }
   }
 
-  public interface IRegion : IPosition, ISize
+  public interface IChangedEvent
   {   
-    WinColor  background  { get; set; }
-    WinColor  foreground  { get; set; }
-
     event     ChangedEventHandler Changed;
 
     void                          IndicateChange();
+  }
+
+  public interface IRegion : IPosition, ISize, IChangedEvent
+  {   
+    StyleIndex styleIndex  { get; set; }
   }
 
   public interface IArea : IRegion

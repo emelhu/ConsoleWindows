@@ -12,8 +12,7 @@ namespace eMeL.ConsoleWindows
     public int            width;
     public int            height;
 
-    public WinColor       foreground;
-    public WinColor       background;
+    public Style          style;
 
     public string         displayText;                                                            // nullable if no content to display
 
@@ -22,25 +21,29 @@ namespace eMeL.ConsoleWindows
     public IScrollbarInfo scrollbarsInfo;
 
 
-    //public DisplayConsolePartInfo (int row, int col, int width, int height, WinColor foreground, WinColor background, string displayText = null)
+    //public DisplayConsolePartInfo (int row, int col, int width, int height, ref Style style, string displayText = null)
     //{
     //  this.row          = row;   
     //  this.col          = col;  
     //  this.width        = width; 
     //  this.height       = height;
-    //  this.foreground   = foreground; 
-    //  this.background   = background; 
+    //  this.style        = style; 
     //  this.displayText  = displayText;
     //}
 
-    public DisplayConsolePartInfo(IRegion region)
+    public static DisplayConsolePartInfo CreateFrom(Window<IViewModel> window)       
+    {
+
+      return new DisplayConsolePartInfo(window, window.GetStyle(window.styleIndex));
+    }
+
+    public DisplayConsolePartInfo(IRegion region, Style style)
     {
       this.row            = region.row;
       this.col            = region.col;
       this.width          = region.width;
       this.height         = region.height;
-      this.foreground     = region.foreground;
-      this.background     = region.background;
+      this.style          = style;
       this.displayText    = null;
       this.border         = null; 
       this.scrollbars     = null;

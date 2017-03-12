@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define USE_traceEnabled                                                        // Write trace messages
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,10 +21,24 @@ namespace eMeL.ConsoleWindows.Core
     /// <param name="cols">Count of cols in window.</param>
     /// <param name="foreground">Default color of foreground.</param>
     /// <param name="background">Default color of background.</param>
-    public CoreConsole(string  title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White)
-      : base(title, ((rows == 0) ? Console.BufferHeight : rows), ((cols == 0) ? Console.BufferWidth : cols), foreground, background)
+    public CoreConsole(string  title, int rows = 25, int cols = 80, Styles styles = null, ConColor? foreground = null, ConColor? background = null)
+      : base(title, ((rows == 0) ? Console.BufferHeight : rows), ((cols == 0) ? Console.BufferWidth : cols), styles)
     {
-      #if DEBUG
+      Style rootStyle = styles[StyleIndex.RootWindow];                                            // struct
+
+      if (rootStyle.foreground == WinColor.None)
+      {
+        rootStyle.foreground = (WinColor)((foreground != null) ? (int)foreground : (int)Style.defaultForeground);
+      }
+
+      if (rootStyle.background == WinColor.None)
+      {
+        rootStyle.background = (WinColor)((background != null) ? (int)background : (int)Style.defaultBackground);
+      }
+
+      styles[StyleIndex.RootWindow] = rootStyle;  
+
+      #if USE_traceEnabled
       traceEnabled = true;
       #endif
     }
@@ -119,10 +135,14 @@ namespace eMeL.ConsoleWindows.Core
         this.title = Environment.GetCommandLineArgs()[0];        
       } 
 
+      Style style = styles[StyleIndex.RootWindow];
+
+      style.NormalizeInsufficient();
+
       Console.InputEncoding   = Encoding.Unicode;
       Console.OutputEncoding  = Encoding.Unicode;
-      Console.ForegroundColor = (ConsoleColor)(int)this.foreground;
-      Console.BackgroundColor = (ConsoleColor)(int)this.background;
+      Console.ForegroundColor = (ConsoleColor)(int)style.sufficientForeground;
+      Console.BackgroundColor = (ConsoleColor)(int)style.sufficientBackground;
       Console.Title           = this.title;
     }
 

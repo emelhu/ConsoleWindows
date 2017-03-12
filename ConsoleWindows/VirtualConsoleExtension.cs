@@ -11,7 +11,7 @@ namespace eMeL.ConsoleWindows
     {
       IViewModel vm = new RootWindowViewModel();
 
-      Window<IViewModel> root = new Window<IViewModel>(vm, 0, 0, vc.cols, vc.rows, (WinColor)(int)(vc.foreground), (WinColor)(int)(vc.background));
+      Window<IViewModel> root = new Window<IViewModel>(vm, 0, 0, vc.cols, vc.rows, StyleIndex.RootWindow);
 
       return root;
     }

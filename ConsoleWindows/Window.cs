@@ -59,6 +59,42 @@ namespace eMeL.ConsoleWindows
       }
     } 
 
+    public Style style
+    {
+      get
+      {
+        return GetStyle(this.styleIndex);
+      }
+    }
+
+    public Styles styles
+    {
+      get
+      {
+        if (_styles != null)
+        {
+          return _styles;
+        }
+
+        if (isRootWindow)
+        {  
+          _styles = _consoleWindows.virtualConsole.styles;
+          return _styles;
+        }
+
+        Debug.Assert(_parentWindow != null);
+
+        _styles = _parentWindow.styles;                                                           // recursion
+
+        return _styles;                                                                     
+      }
+    }
+    private Styles _styles = null;
+
+    public Style GetStyle(StyleIndex styleIndex)
+    {     
+      return styles[styleIndex];      
+    } 
 
     public IElement actualElement 
       { 
@@ -83,22 +119,17 @@ namespace eMeL.ConsoleWindows
     #region constructor
 
     public Window(TViewModel viewModel, IRegion region, Border? border = null, Scrollbars? scrollbars = null)
-      : this(viewModel, region.row, region.col, region.width, region.height, region.foreground, region.background, border, scrollbars)
+      : this(viewModel, region.row, region.col, region.width, region.height, region.styleIndex, border, scrollbars)
     {
     }
 
     public Window(TViewModel viewModel, IArea area)
-      : this(viewModel, area.row, area.col, area.width, area.height, area.foreground, area.background, area.border, area.scrollbars)
+      : this(viewModel, area.row, area.col, area.width, area.height, area.styleIndex, area.border, area.scrollbars)
     {
     }
 
-    //public static explicit operator Window<TViewModel>(Window<ConsoleWindows.ConsoleWindowsViewModel> v)
-    //{
-    //  return (Window<TViewModel>)v;
-    //}
-
-    public Window(TViewModel viewModel, int row, int col, int width, int height, WinColor foreground = WinColor.None, WinColor background = WinColor.None, Border? border = null, Scrollbars? scrollbars = null)
-      : base (row, col, width, height, foreground, background, border, scrollbars)
+    public Window(TViewModel viewModel, int row, int col, int width, int height, StyleIndex styleIndex = StyleIndex.Window, Border? border = null, Scrollbars? scrollbars = null)
+      : base (row, col, width, height, styleIndex, border, scrollbars)
     {  
       this.viewModel = viewModel;    
 
@@ -110,8 +141,8 @@ namespace eMeL.ConsoleWindows
       state = State.Editable;                                                                     // default state      
     }
     
-    public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
-      : this(viewModel, row, col, width, height, foreground, background, border, scrollbars)
+    public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, StyleIndex styleIndex = StyleIndex.Window)
+      : this(viewModel, row, col, width, height, styleIndex, border, scrollbars)
     {
     }
 
@@ -281,9 +312,10 @@ namespace eMeL.ConsoleWindows
 
     private void InternalDisplay()
     {
-      var dp = new DisplayConsolePartInfo(this);
+      //var partInfo = DisplayConsolePartInfo.CreateFrom(this);
+      var partInfo = new DisplayConsolePartInfo(this, GetStyle(this.styleIndex));
 
-      InternalDisplayPart(ref dp);                                                                // Display window's IArea
+      InternalDisplayPart(ref partInfo);                                                                // Display window's IArea
 
       var orderedElements = GetDisplayOrderedElements();
 
@@ -295,17 +327,19 @@ namespace eMeL.ConsoleWindows
         {
           if (childWindow.isVisible)
           {
-            var dp2 = new DisplayConsolePartInfo(childWindow);
+            //var partInfo2 = new DisplayConsolePartInfo(childWindow, GetStyle(childWindow.styleIndex));
+            var partInfo2 = DisplayConsolePartInfo.CreateFrom(childWindow);
 
-            InternalDisplayPart(ref dp2);                                                          // Display window's IArea
+            InternalDisplayPart(ref partInfo2);                                                          // Display window's IArea
 
             childWindow.InternalDisplay();
           }
         }
         else
         {
-          var dp3 = new DisplayConsolePartInfo(element);
-          InternalDisplayPart(ref dp3);
+          var partInfo3 = new DisplayConsolePartInfo(element, GetStyle(element.styleIndex));
+
+          InternalDisplayPart(ref partInfo3);
         }
       }
     }
@@ -320,14 +354,14 @@ namespace eMeL.ConsoleWindows
       partInfo.row    += this.row;
       partInfo.col    += this.col;
 
-      if (partInfo.background == WinColor.None)
+      if (partInfo.style.background == WinColor.None)
       {
-        partInfo.background = this.background;
+        partInfo.style.background = style.background;
       }
 
-      if (partInfo.foreground == WinColor.None)
+      if (partInfo.style.foreground == WinColor.None)
       {
-        partInfo.foreground = this.foreground;
+        partInfo.style.foreground = style.foreground;
       }
 
       if (isRootWindow)
@@ -440,20 +474,22 @@ namespace eMeL.ConsoleWindows
         }
       }
 
-      return false;
+      return null;
     }
 
-    private bool IsValid()
+    private string IsValid()
     {
       foreach (var region in elements)
       {
-        if (! IsItemValid(region))
+        var errorMessage = IsItemValid(region);
+
+        if (errorMessage != null)
         {
-          return false;
+          return errorMessage;
         }
       }
 
-      return true;
+      return null;                                                                                // Valid, none error message.
     }
 
     public void ToFirstItem()
@@ -483,7 +519,7 @@ namespace eMeL.ConsoleWindows
         {
           if (IsItemApplicable(region))  
           {      
-            if (! IsItemValid(_actualRegion))
+            if (IsItemValid(_actualRegion) != null)
             {
               return;
             }
@@ -515,7 +551,7 @@ namespace eMeL.ConsoleWindows
             {
               if (IsItemApplicable(region))  
               {
-                if (! IsItemValid(_actualRegion))
+                if (IsItemValid(_actualRegion) != null)
                 {
                   return;
                 }

@@ -13,8 +13,7 @@ namespace eMeL.ConsoleWindows
 
     private char[]      borderChars;
 
-    public WinColor     foreground { get; set; }
-    public WinColor     background { get; set; }
+    public StyleIndex   styleIndex { get; set; }
 
     public const char   defaultBorderNoFrame                      = '\0';
 
@@ -40,11 +39,10 @@ namespace eMeL.ConsoleWindows
     public char bottomLeft    { get { return borderChars[(int)BorderPosition.bottomLeft]; }   set { borderChars[(int)BorderPosition.bottomLeft]  = value; } }
     public char left          { get { return borderChars[(int)BorderPosition.left]; }         set { borderChars[(int)BorderPosition.left]        = value; } }
 
-    public Border(char allChars = defaultBorderNoFrame, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Border(char allChars = defaultBorderNoFrame, StyleIndex styleIndex = StyleIndex.Border)
     {
       this.borderChars = new char[numberOfBorderChars];
-      this.foreground  = foreground;
-      this.background  = background;
+      this.styleIndex  = styleIndex;
 
       for (int i = 0; i < numberOfBorderChars; i++)
       {
@@ -52,11 +50,10 @@ namespace eMeL.ConsoleWindows
       }     
     }
 
-    public Border(char[] chars, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Border(char[] chars, StyleIndex styleIndex = StyleIndex.Border)
     {
       this.borderChars = new char[numberOfBorderChars];
-      this.foreground  = foreground;
-      this.background  = background;
+      this.styleIndex  = styleIndex;
 
       //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0') 
 
@@ -69,11 +66,10 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    public Border(string chars, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Border(string chars, StyleIndex styleIndex = StyleIndex.Border)
     {
       this.borderChars = new char[numberOfBorderChars];
-      this.foreground  = foreground;
-      this.background  = background;
+      this.styleIndex  = styleIndex;
 
       //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0')
 

@@ -11,14 +11,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
+
 namespace eMeL.ConsoleWindows
 {
+  using PackedStyle = System.Byte;                                                                // implementation-dependent code 
+
   public abstract class VirtualConsole
   {
     #region variables
 
-    private char[]  buffer;
-    private byte[]  colors;
+    private char[]        displayChars;
+    private PackedStyle[] packedStyles;
 
     public  const   int   minRows =  10;
     public  const   int   maxRows = 200;
@@ -30,8 +34,13 @@ namespace eMeL.ConsoleWindows
     public  int     rows  { get; private set; }
     public  int     cols  { get; private set; }
 
-    public  ConColor  foreground  { get; private set; }
-    public  ConColor  background  { get; private set; }
+    public  StyleIndex  styleIndex { get; private set; }
+
+    public  Styles      styles     { get; private set; }
+
+    //public  ConColor  foreground  { get; private set; }
+    //public  ConColor  background  { get; private set; }
+    
 
     public static bool defaultSetWindowSize = true;
     private       bool setWindowSize        = defaultSetWindowSize;
@@ -71,20 +80,27 @@ namespace eMeL.ConsoleWindows
 
     #region constructor
 
-    public VirtualConsole(string title, int rows = 25, int cols = 80, ConColor foreground = ConColor.Black, ConColor background = ConColor.White, IConsoleMouse consoleMouse = null, bool? setWindowSize = null)
+    public VirtualConsole(string title, int rows = 25, int cols = 80, Styles styles = null, StyleIndex styleIndex = StyleIndex.RootWindow, IConsoleMouse consoleMouse = null, bool? setWindowSize = null)
     {
       rows    = Math.Min(Math.Max(rows, minRows), maxRows);
       cols    = Math.Min(Math.Max(cols, minCols), maxCols);
 
-      var cb  = GetColorByte(foreground, background);
-      buffer  = Enumerable.Repeat(' ', rows * cols).ToArray();
-      colors  = Enumerable.Repeat(cb,  rows * cols).ToArray();
+      if (styles == null)
+      { // use a default style pack
+        styles = new Styles();
+      }
+
+      var style     = styles[styleIndex];
+      var styleItem = GetStylePacked(ref style);
+      displayChars        = Enumerable.Repeat(' ',        rows * cols).ToArray();
+      packedStyles        = Enumerable.Repeat(styleItem,  rows * cols).ToArray();
 
       this.title      = title;
       this.rows       = rows; 
       this.cols       = cols;
-      this.foreground = foreground;
-      this.background = background;
+      this.styleIndex = styleIndex;
+      //this.foreground = foreground;
+      //this.background = background;
 
       this.setWindowSize = setWindowSize ?? defaultSetWindowSize;
 
@@ -101,7 +117,7 @@ namespace eMeL.ConsoleWindows
 
     #region Write
 
-    public void Write(int row, int col, string text, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public void Write(int row, int col, string text, ref Style style)
     {
       if (text == null)
       {
@@ -126,55 +142,47 @@ namespace eMeL.ConsoleWindows
         text = text.Substring(0, maxLen);
       }
 
-      Array.Copy(text.ToArray(), 0, buffer, position, text.Length);
+      Array.Copy(text.ToArray(), 0, displayChars, position, text.Length);
 
-      if (foreground == WinColor.None)
-      {
-        foreground = (WinColor)(int)this.foreground;
-      }
-
-      if (background == WinColor.None)
-      {
-        background = (WinColor)(int)this.background;
-      }
-
-      byte colorByte  = GetColorByte((ConColor)(int)foreground, (ConColor)(int)background);
+      byte colorByte  = GetStylePacked(ref style);
       var  colorBytes = Enumerable.Repeat(colorByte, maxLen).ToArray();
 
-      Array.Copy(colorBytes, 0, colors, position, text.Length);
+      Array.Copy(colorBytes, 0, packedStyles, position, text.Length);
 
       Refresh();
     }
 
-    protected byte GetColorByte(ConColor foreground, ConColor background)
+    #region implementation-dependent code 
+    protected PackedStyle GetStylePacked(ref Style style)
     {
-      int ret = (int)foreground;
+      int ret = (int)(style.sufficientForeground);
 
       ret = ret << 4;                                                                             // shift bits
 
-      ret |= (int)background;                                                                     // bitwise
+      ret |= (int)style.sufficientBackground;                                                                     // bitwise
 
-      return (byte)ret;
+      return (PackedStyle)ret;
     }
 
-    protected ConColor GetForegroundColor(byte colorByte)
+    protected ConColor GetForegroundColor(PackedStyle packedStyle)
     {
-      int ret = colorByte;
+      int ret = packedStyle;
 
       ret = ret >> 4;   
 
       return (ConColor)ret;
     }
 
-    protected ConColor GetBackgroundColor(byte colorByte)
+    protected ConColor GetBackgroundColor(PackedStyle packedStyle)
     {
-      int ret = colorByte;
+      int ret = packedStyle;
 
       ret &= (int)0x0F;  
 
       return (ConColor)ret;
     }
-    #endregion    
+    #endregion
+    #endregion
 
     #region child class Display helpers
 
@@ -187,7 +195,7 @@ namespace eMeL.ConsoleWindows
 
       var part = new char[len];
 
-      Array.Copy(buffer, pos, part, 0, len);
+      Array.Copy(displayChars, pos, part, 0, len);
 
       return part;
     }
@@ -197,7 +205,7 @@ namespace eMeL.ConsoleWindows
       Debug.Assert(pos >= 0);
       Debug.Assert(pos < this.rows * this.cols);
 
-      return colors[pos];
+      return packedStyles[pos];
     }
     #endregion
 

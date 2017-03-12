@@ -11,8 +11,7 @@ namespace eMeL.ConsoleWindows
 
     private char[] scrollbarsChars;
 
-    public WinColor     foreground { get; set; }
-    public WinColor     background { get; set; }
+    public StyleIndex   styleIndex { get; set; }
 
     public const string defaultNoneScrollbars                     = null;                         // "\0\0\0\0\0\0\0";
 
@@ -29,11 +28,10 @@ namespace eMeL.ConsoleWindows
     public char verticalBottom  { get { return scrollbarsChars[(int)ScrollbarsPosition.verticalBottom ]; }  set { scrollbarsChars[(int)ScrollbarsPosition.verticalBottom ] = value; } }
     public char scrollPosition  { get { return scrollbarsChars[(int)ScrollbarsPosition.scrollPosition ]; }  set { scrollbarsChars[(int)ScrollbarsPosition.scrollPosition ] = value; } }
 
-    public Scrollbars(char[] chars, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Scrollbars(char[] chars, StyleIndex styleIndex = StyleIndex.Scrollbar)
     {
       this.scrollbarsChars = new char[numberOfScrollbarsChars];
-      this.foreground      = foreground;
-      this.background      = background;
+      this.styleIndex      = styleIndex;
 
       //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö 
 
@@ -46,11 +44,10 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    public Scrollbars(string chars = defaultNoneScrollbars, WinColor foreground = WinColor.None, WinColor background = WinColor.None)
+    public Scrollbars(string chars = defaultNoneScrollbars, StyleIndex styleIndex = StyleIndex.Scrollbar)
     {
       this.scrollbarsChars = new char[numberOfScrollbarsChars];
-      this.foreground      = foreground;
-      this.background      = background;
+      this.styleIndex      = styleIndex;
 
       //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö
 

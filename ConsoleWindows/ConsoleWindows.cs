@@ -29,6 +29,8 @@ namespace eMeL.ConsoleWindows
     
     public Window<IViewModel> actualWindow  { get; private set; }
 
+    public Styles styles  { get { return virtualConsole.styles; } }
+
     #endregion
 
     #region constructor
@@ -56,14 +58,11 @@ namespace eMeL.ConsoleWindows
         Console.Title = args[0];                                                                  // or AssemblyDirectory;
       }   
       
-      this.virtualConsole = virtualConsole;  
-
-      var area = new Area(0, 0, virtualConsole.cols, Console.WindowHeight, (WinColor)(int)Console.ForegroundColor, (WinColor)(int)Console.BackgroundColor);
-
-      this.rootWindow = rootWindow;
-
       rootWindow._consoleWindows = this;                                                          // Only in root filled. (All window can seek it by recursive way... it's good for freedom of attach/detach/orphan windows)
 
+      this.virtualConsole = virtualConsole;  
+      this.rootWindow     = rootWindow;
+     
       actualWindow = rootWindow;        
       actualWindow.ToFirstItem();
 
@@ -120,7 +119,7 @@ namespace eMeL.ConsoleWindows
 
         for (int rowLoop = 0; rowLoop < partInfo.height; rowLoop++)
         {
-          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, text, partInfo.foreground, partInfo.background);
+          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, text, ref partInfo.style);
         }
 
         if (partInfo.border != null) 
@@ -131,49 +130,57 @@ namespace eMeL.ConsoleWindows
           {
             int lastCol     = partInfo.col + partInfo.width  - 1; 
             int lastRow     = partInfo.row + partInfo.height - 1;
-            var foreground  = border.foreground == WinColor.None ? partInfo.foreground : border.foreground;
-            var background  = border.background == WinColor.None ? partInfo.background : border.background;
+            var borderStyle = styles[border.styleIndex];
 
+            if (borderStyle.foreground == WinColor.None)
+            {
+              borderStyle.foreground = partInfo.style.foreground;
+            }
+
+            if (borderStyle.background == WinColor.None)
+            {
+              borderStyle.background = partInfo.style.background;
+            }
 
             if (border.topLeft != '\0')
             {
-              this.virtualConsole.Write(partInfo.row, partInfo.col, border.topLeft.ToString(),      foreground, background);
+              this.virtualConsole.Write(partInfo.row, partInfo.col, border.topLeft.ToString(),          ref borderStyle);
             }
 
             if (border.topRight != '\0')
             {
-              this.virtualConsole.Write(partInfo.row, lastCol,      border.topRight.ToString(),     foreground, background);
+              this.virtualConsole.Write(partInfo.row, lastCol,      border.topRight.ToString(),         ref borderStyle);
             }
 
             if (border.bottomLeft != '\0')
             {
-              this.virtualConsole.Write(lastRow,      partInfo.col, border.bottomLeft.ToString(),   foreground, background);
+              this.virtualConsole.Write(lastRow,      partInfo.col, border.bottomLeft.ToString(),       ref borderStyle);
             }
 
             if (border.bottomRight != '\0')
             {
-              this.virtualConsole.Write(lastRow,      lastCol,      border.bottomRight.ToString(),  foreground, background);
+              this.virtualConsole.Write(lastRow,      lastCol,      border.bottomRight.ToString(),      ref borderStyle);
             }
 
             if ((border.top != '\0') && (partInfo.width > 2))
             {
               var line = new string(border.top, partInfo.width - 2);
 
-              this.virtualConsole.Write(partInfo.row, partInfo.col + 1,   line,                     foreground, background);
+              this.virtualConsole.Write(partInfo.row, partInfo.col + 1,   line,                         ref borderStyle);
             }
 
             if ((border.bottom != '\0') && (partInfo.width > 2))
             {
               var line = new string(border.bottom, partInfo.width - 2);
 
-              this.virtualConsole.Write(lastRow,      partInfo.col + 1,   line,                     foreground, background);
+              this.virtualConsole.Write(lastRow,      partInfo.col + 1,   line,                         ref borderStyle);
             }
 
             if ((border.left != '\0') && (partInfo.height > 2))
             {
               for (int rowLoop = 1; rowLoop < partInfo.height - 1; rowLoop++)
               {
-                this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, border.left.ToString(), foreground, background);
+                this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, border.left.ToString(), ref borderStyle);
               }
             }
 
@@ -181,7 +188,7 @@ namespace eMeL.ConsoleWindows
             {
               for (int rowLoop = 1; rowLoop < partInfo.height - 1; rowLoop++)
               {
-                this.virtualConsole.Write(partInfo.row + rowLoop, lastCol, border.right.ToString(),     foreground, background);
+                this.virtualConsole.Write(partInfo.row + rowLoop, lastCol, border.right.ToString(),     ref borderStyle);
               }
             }
           }
@@ -192,10 +199,20 @@ namespace eMeL.ConsoleWindows
           var scrollbars      = (Scrollbars)partInfo.scrollbars;
           var scrollbarsInfo  = partInfo.scrollbarsInfo;
 
-          int lastCol     = partInfo.col + partInfo.width  - 1; 
-          int lastRow     = partInfo.row + partInfo.height - 1;
-          var foreground  = scrollbars.foreground == WinColor.None ? partInfo.foreground : scrollbars.foreground;
-          var background  = scrollbars.background == WinColor.None ? partInfo.background : scrollbars.background;
+          int lastCol         = partInfo.col + partInfo.width  - 1; 
+          int lastRow         = partInfo.row + partInfo.height - 1;
+          
+          var scrollbarStyle  = styles[scrollbars.styleIndex];
+
+          if (scrollbarStyle.foreground == WinColor.None)
+          {
+            scrollbarStyle.foreground = partInfo.style.foreground;
+          }
+
+          if (scrollbarStyle.background == WinColor.None)
+          {
+            scrollbarStyle.background = partInfo.style.background;
+          }
 
           if (scrollbarsInfo.leftArrowVisible  && (scrollbars.horizontalLeft  != '\0'))
           {
@@ -230,7 +247,7 @@ namespace eMeL.ConsoleWindows
       }
       else if (partInfo.height == 1)
       { // Only one line
-        this.virtualConsole.Write(partInfo.row, partInfo.col, FormattedDisplayText(partInfo.displayText, partInfo.width), partInfo.foreground, partInfo.background);
+        this.virtualConsole.Write(partInfo.row, partInfo.col, FormattedDisplayText(partInfo.displayText, partInfo.width), ref partInfo.style);
       }
       else
       { // multiple line
@@ -245,7 +262,7 @@ namespace eMeL.ConsoleWindows
             text = lines[rowLoop];
           }
 
-          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, FormattedDisplayText(text, partInfo.width), partInfo.foreground, partInfo.background);
+          this.virtualConsole.Write(partInfo.row + rowLoop, partInfo.col, FormattedDisplayText(text, partInfo.width), ref partInfo.style);
         }
       }
     }
@@ -553,33 +570,28 @@ namespace eMeL.ConsoleWindows
     public AnswerDisplayInfo? DisplayMessage(string message, MessageType messageType = MessageType.message, int askLength = 0, bool? useErrorLine = null)    
     {
       int       dispRow;
-      WinColor  background;
-      WinColor  foreground;      
+      Style     style;
 
       switch (messageType)
       {
         case MessageType.description:
-          dispRow     = (useErrorLine ?? false) ? errorTextLine : descriptionTextLine;
-          background  = descriptionBackground;
-          foreground  = descriptionForeground;
+          dispRow     = (useErrorLine ?? false) ? messageTextLine : descriptionTextLine;
+          style       = styles[StyleIndex.Description];
           break;
 
         case MessageType.error:
-          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
-          background  = errorBackground;
-          foreground  = errorForeground;
+          dispRow     = (useErrorLine ?? true) ? messageTextLine : descriptionTextLine;
+          style       = styles[StyleIndex.Error];
           break;
 
         case MessageType.ask:
-          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
-          background  = questionBackground;
-          foreground  = questionForeground;
+          dispRow     = (useErrorLine ?? true) ? messageTextLine : descriptionTextLine;
+          style       = styles[StyleIndex.Question];
           break;
 
         case MessageType.message:
-          dispRow     = (useErrorLine ?? true) ? errorTextLine : descriptionTextLine;
-          background  = messageBackground;
-          foreground  = messageForeground;
+          dispRow     = (useErrorLine ?? true) ? messageTextLine : descriptionTextLine;
+          style       = styles[StyleIndex.Message];
           break;
 
         default:
@@ -594,13 +606,13 @@ namespace eMeL.ConsoleWindows
 
       if (message == null)
       { // Clear message
-        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), WinColor.None, WinColor.None);
+        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), ref style);
 
         return null;
       }
       else
       {
-        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), foreground, background);
+        this.virtualConsole.Write(dispRow, leftMargin, new string(' ', backWidth), ref style);
 
         message = message.Trim();
 
@@ -630,8 +642,8 @@ namespace eMeL.ConsoleWindows
 
           int displayPosition = (backWidth - askLength - message.Length) / 2;          
         
-          var answerInfo = new AnswerDisplayInfo(dispRow, leftMargin + displayPosition + message.Length, askLength, foreground, background);  
-          this.virtualConsole.Write(dispRow, leftMargin + displayPosition, message, foreground, background);
+          var answerInfo = new AnswerDisplayInfo(dispRow, leftMargin + displayPosition + message.Length, askLength, ref style);  
+          this.virtualConsole.Write(dispRow, leftMargin + displayPosition, message, ref style);
           DisplayAnswer(ref answerInfo);
           
           return answerInfo;
@@ -657,14 +669,14 @@ namespace eMeL.ConsoleWindows
         }        
       }
 
-      this.virtualConsole.Write(dispRow, leftMargin + ((backWidth - message.Length) / 2), message, foreground, background);
+      this.virtualConsole.Write(dispRow, leftMargin + ((backWidth - message.Length) / 2), message, ref style);
 
       return null;
     }
 
     private void DisplayAnswer(ref AnswerDisplayInfo answerInfo)
     {
-      this.virtualConsole.Write(answerInfo.row, answerInfo.col, answerInfo.fulltext, answerInfo.foreground, answerInfo.background);
+      this.virtualConsole.Write(answerInfo.row, answerInfo.col, answerInfo.fulltext, ref answerInfo.style);
     }
 
     public struct AnswerDisplayInfo
@@ -674,18 +686,16 @@ namespace eMeL.ConsoleWindows
       public int      len;
       public string   text;
       public char     placeholder;
-      public WinColor background;
-      public WinColor foreground;      
+      public Style    style;
 
-      public AnswerDisplayInfo(int row, int col, int len, WinColor foreground, WinColor background)
+      public AnswerDisplayInfo(int row, int col, int len, ref Style style)
       {
         this.row          = row; 
         this.col          = col; 
         this.len          = len;
         this.text         = String.Empty;
         this.placeholder  = '□';
-        this.background   = background;
-        this.foreground   = foreground;
+        this.style        = style;
       }
 
       public string fulltext
@@ -705,42 +715,17 @@ namespace eMeL.ConsoleWindows
     #region common
 
     #region description
-    public static WinColor  defaultDescriptionBackground  = WinColor.DarkGray;
-    public static WinColor  defaultDescriptionForeground  = WinColor.White;
-
-    public        WinColor  descriptionBackground         = defaultDescriptionBackground;
-    public        WinColor  descriptionForeground         = defaultDescriptionForeground;
-
     public static int       defaultDescriptionTextLine    = VirtualConsole.maxRows - 2;
     public        int       descriptionTextLine           = defaultDescriptionTextLine;
     #endregion
 
-    #region error/message/question
-    public static WinColor  defaultErrorBackground        = WinColor.Yellow;
-    public static WinColor  defaultErrorForeground        = WinColor.Red;
-   
-    public        WinColor  errorBackground               = defaultErrorBackground;
-    public        WinColor  errorForeground               = defaultErrorForeground;
-
-    public static WinColor  defaultMessageBackground      = WinColor.Gray;
-    public static WinColor  defaultMessageForeground      = WinColor.Yellow;
-   
-    public        WinColor  messageBackground             = defaultMessageBackground;
-    public        WinColor  messageForeground             = defaultMessageForeground;
-
-    public static WinColor  defaultQuestionBackground     = WinColor.Gray;
-    public static WinColor  defaultQuestionForeground     = WinColor.Green;
-   
-    public        WinColor  questionBackground            = defaultQuestionBackground;
-    public        WinColor  questionForeground            = defaultQuestionForeground;
-                                                           
-    public static int       defaultErrorTextLine          = VirtualConsole.maxRows - 1;
-    public        int       errorTextLine                 = defaultErrorTextLine;
+    #region error/message/question                                                       
+    public static int       defaultMessageTextLine        = VirtualConsole.maxRows - 1;
+    public        int       messageTextLine               = defaultMessageTextLine;
     #endregion
 
     #region message texts
-    public static string    defaultErrorText_Empty        = "Do not leave empty this element!";
-    public        string    errorText_Empty               = defaultErrorText_Empty;
+    public static string    errorText_Empty               = "Do not leave empty this element!";
     #endregion
 
     #endregion
