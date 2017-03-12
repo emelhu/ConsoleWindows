@@ -19,12 +19,23 @@ namespace eMeL.ConsoleWindows.Core
     /// <param name="title">Title of window.</param>
     /// <param name="rows">Count of rows in window.</param>
     /// <param name="cols">Count of cols in window.</param>
+    /// <param name="styles">Styles for windows and items.</param>
     /// <param name="foreground">Default color of foreground.</param>
     /// <param name="background">Default color of background.</param>
     public CoreConsole(string  title, int rows = 25, int cols = 80, Styles styles = null, ConColor? foreground = null, ConColor? background = null)
-      : base(title, ((rows == 0) ? Console.BufferHeight : rows), ((cols == 0) ? Console.BufferWidth : cols), styles)
+      : base(title, ((rows < 1) ? Console.BufferHeight : rows), ((cols < 1) ? Console.BufferWidth : cols), styles)
     {
-      Style rootStyle = styles[StyleIndex.RootWindow];                                            // struct
+      Style rootStyle = this.styles[StyleIndex.RootWindow];                                            // struct
+
+      if (foreground != null)
+      {
+        rootStyle.foreground = (WinColor)(int)foreground;
+      }
+
+      if (background != null)
+      {
+        rootStyle.background = (WinColor)(int)background;
+      }
 
       if (rootStyle.foreground == WinColor.None)
       {
@@ -36,11 +47,25 @@ namespace eMeL.ConsoleWindows.Core
         rootStyle.background = (WinColor)((background != null) ? (int)background : (int)Style.defaultBackground);
       }
 
-      styles[StyleIndex.RootWindow] = rootStyle;  
+      this.styles[StyleIndex.RootWindow] = rootStyle;  
 
       #if USE_traceEnabled
       traceEnabled = true;
       #endif
+    }
+
+    /// <summary>
+    /// Create a VirtualConsole for DotNet Core with attributions.
+    /// </summary>
+    /// <param name="title">Title of window.</param>
+    /// <param name="rows">Count of rows in window.</param>
+    /// <param name="styles">Styles for windows and items.</param>
+    /// <param name="cols">Count of cols in window.</param>
+    /// <param name="foreground">Default color of foreground.</param>
+    /// <param name="background">Default color of background.</param>
+    public CoreConsole(string  title, Styles styles, int rows = 25, int cols = 80, ConColor? foreground = null, ConColor? background = null)
+      : this(title, ((rows < 1) ? Console.BufferHeight : rows), ((cols < 1) ? Console.BufferWidth : cols), styles, foreground, background)
+    {
     }
 
     protected override bool KeyAvailable
@@ -66,7 +91,7 @@ namespace eMeL.ConsoleWindows.Core
       Console.SetCursorPosition(0, 0);                                
 
       int   colorByte        = 0;
-      int   colorPacketByte  = GetColorByte(0);                                                   // "charLoop == 0" situation
+      int   colorPacketByte  = GetPackedStyle(0);                                                   // "charLoop == 0" situation
       int   colorPacketStart = 0;                                                                 // "charLoop == 0" situation                                                               
       int   maxPosition      = this.rows * this.cols;
       
@@ -74,7 +99,7 @@ namespace eMeL.ConsoleWindows.Core
       {
         if (charLoop < maxPosition)
         {                                                                                         // (charLoop == maxPosition) is possible but for display last block too.
-          colorByte = GetColorByte(charLoop);
+          colorByte = GetPackedStyle(charLoop);
         }
 
         if ((colorPacketByte != colorByte) || ((charLoop % this.cols) == 0) || (charLoop == maxPosition))

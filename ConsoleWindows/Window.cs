@@ -171,14 +171,39 @@ namespace eMeL.ConsoleWindows
         Trace.WriteLine(">> Window.AddElement: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
       }
       #endif
-
+      
       element.Changed += new ChangedEventHandler(ChangedEvent);
 
-      var childWindow = element as Window<IViewModel>;
-
-      if (childWindow != null)
+      if (element is Window<IViewModel> childWindow)
       {
+        childWindow._styles      = styles;
         childWindow.parentWindow = this as Window<IViewModel>;;
+      }
+      
+      Refresh();
+    }
+
+    public void RemoveElement(IRegion element)
+    {
+      if (element == null)
+      {
+        throw new ArgumentException("There is null argumentum!", nameof(element));
+      }
+
+      elements.Remove(element);
+
+      #if USE_traceEnabled
+      if (traceEnabled)
+      {
+        Trace.WriteLine(">> Window.RemoveElement: " + Environment.TickCount.ToString() + " | " + element.GetType().ToString());
+      }
+      #endif
+
+      element.Changed -= new ChangedEventHandler(ChangedEvent);
+
+      if (element is Window<IViewModel> childWindow)
+      {
+        childWindow.parentWindow = null;
       }
       
       Refresh();
@@ -658,15 +683,17 @@ namespace eMeL.ConsoleWindows
 
         if (elements != null)
         {
+          ClearDependencies();
+
           foreach (var element in elements)
           {
-            element.Changed -= new ChangedEventHandler(ChangedEvent);
-
-            var childWindow = element as Window<IViewModel>;
-
-            if (childWindow != null)
+            if (element is Window<IViewModel> childWindow)
             {
-              childWindow.parentWindow = null;
+              childWindow.ClearDependencies();                                                    // in ClearDependencies() occur the element.Changed -= new ChangedEventHandler(ChangedEvent);
+            }
+            else
+            {
+              element.Changed -= new ChangedEventHandler(ChangedEvent);
             }
           }
 
@@ -692,6 +719,18 @@ namespace eMeL.ConsoleWindows
     #if USE_traceEnabled
       public static bool traceEnabled = true;
     #endif
+
+    private void ClearDependencies()
+    {
+      if (parentWindow != null)
+      {
+        parentWindow.RemoveElement(this);
+      }
+
+      parentWindow    = null;
+      _consoleWindows = null;
+      _styles         = null;
+    }
     #endregion
   }
 }

@@ -12,6 +12,12 @@ namespace ConsoleWindowsDemo
 
   public class Program
   {
+    public const StyleIndex ownStyle1 = (StyleIndex)(int)(StyleIndex.User0);
+    public const StyleIndex ownStyle2 = (StyleIndex)(int)(StyleIndex.User0 + 1);
+    public const StyleIndex ownStyle3 = (StyleIndex)(int)(StyleIndex.User0 + 2);
+
+    private static Styles styles = new Styles();
+
     public static void Main(string[] args)
     {
       Console.Title = "ConsoleWindowsDemo | a demo for ConsoleWindows.dll | (c) eMeL, www.emel.hu";
@@ -24,6 +30,10 @@ namespace ConsoleWindowsDemo
       Console.ResetColor();
 
       Console.WriteLine();
+
+      styles[ownStyle1] = new Style(WinColor.Magenta, WinColor.DarkYellow);
+      styles[ownStyle2] = new Style(WinColor.Cyan,    WinColor.Green);
+      styles[ownStyle3] = new Style(WinColor.Blue,    WinColor.None);
 
       char operation;
 
@@ -99,10 +109,7 @@ namespace ConsoleWindowsDemo
     {
       VirtualConsole.defaultSetWindowSize = false;
 
-      TextElement.defaultBackground = WinColor.DarkGray;
-      TextElement.defaultForeground = WinColor.Gray;
-
-      var con    = new CoreConsole("SimpleTest1 --- ConsoleWindowsDemo");
+      var con    = new CoreConsole("SimpleTest1 --- ConsoleWindowsDemo", 25, 80, styles);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
@@ -115,10 +122,13 @@ namespace ConsoleWindowsDemo
         conWin.rootWindow.AddElement(textElement);
       }
 
-      textElement = new TextElement(10, 10, "Pressed key:", WinColor.Blue, WinColor.White);  
+      styles[StyleIndex.User8] = new Style(WinColor.Red,  WinColor.Yellow);
+      styles[StyleIndex.User9] = new Style(WinColor.Blue, WinColor.White);
+
+      textElement = new TextElement(10, 10, "Pressed key:", StyleIndex.User9);  
       conWin.rootWindow.AddElement(textElement);  
 
-      textElement = new TextElement(10, 24, 40, 1, WinColor.Red, WinColor.Yellow);  
+      textElement = new TextElement(10, 24, 40, 1, StyleIndex.User8);  
       conWin.rootWindow.AddElement(textElement);  
 
       con.ApplyPreviewReadedKey(consoleKeyInfo =>
@@ -157,10 +167,7 @@ namespace ConsoleWindowsDemo
 
     public static void BorderAndAreaTest1()
     {
-      TextElement.defaultBackground = WinColor.DarkGray;
-      TextElement.defaultForeground = WinColor.Gray;
-
-      var con    = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo");
+      var con    = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo", 25, 80, styles);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
@@ -173,10 +180,10 @@ namespace ConsoleWindowsDemo
         conWin.rootWindow.AddElement(textElement);
       }
 
-      var region = new Region(3, 3, 3, 3, WinColor.Cyan,    WinColor.Green);
-      var area   = new Area(  6, 6, 6, 6, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFrameSingle));
+      var region = new Region(3, 3, 3, 3, ownStyle1);
+      var area   = new Area(  6, 6, 6, 6, ownStyle2, new Border(Border.defaultBorderFrameSingle));
 
-      var area2  = new Area( 10, 20, 20, 8, WinColor.None, WinColor.None, new Border(Border.defaultBorderFrameVertDoubleHorSingle));
+      var area2  = new Area( 10, 20, 20, 8, StyleIndex.Default, new Border(Border.defaultBorderFrameVertDoubleHorSingle));
 
       conWin.rootWindow.AddElement(region);
       conWin.rootWindow.AddElement(area);
@@ -189,16 +196,13 @@ namespace ConsoleWindowsDemo
 
     public static void ViewAndCangeTest1()
     { 
-      TextElement.defaultBackground = WinColor.DarkGray;
-      TextElement.defaultForeground = WinColor.Gray;
-
-      var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo");
+      var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo", styles);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       conWin.Start(false);
 
-      var region = new Region(3, 10, 10, 10, WinColor.Cyan, WinColor.Green);
-      var area   = new Area(  6, 20, 10, 15, WinColor.Magenta, WinColor.DarkYellow, new Border(Border.defaultBorderFramePattern1));
+      var region = new Region(3, 10, 10, 10, ownStyle1);
+      var area   = new Area(  6, 20, 10, 15, ownStyle2, new Border(Border.defaultBorderFramePattern1));
 
       conWin.rootWindow.AddElement(region);
       conWin.rootWindow.AddElement(area);
@@ -209,7 +213,7 @@ namespace ConsoleWindowsDemo
       var textElement2 = new TextElement(15, 60, "proba2");
 
       var textElement3 = new TextElement(1, 30, "...press Escape to end...");
-      var textElement4 = new TextElement(1, 60, "........", WinColor.DarkRed, WinColor.Green);
+      var textElement4 = new TextElement(1, 60, "........", ownStyle3);
 
       conWin.rootWindow.AddElement(textElement2);
       conWin.rootWindow.AddElement(textElement1);

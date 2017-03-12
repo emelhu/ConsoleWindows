@@ -90,17 +90,16 @@ namespace eMeL.ConsoleWindows
         styles = new Styles();
       }
 
-      var style     = styles[styleIndex];
-      var styleItem = GetStylePacked(ref style);
-      displayChars        = Enumerable.Repeat(' ',        rows * cols).ToArray();
-      packedStyles        = Enumerable.Repeat(styleItem,  rows * cols).ToArray();
+      var style       = styles[styleIndex];
+      var styleItem   = GetPackedStyle(ref style);
+      displayChars    = Enumerable.Repeat(' ',        rows * cols).ToArray();
+      packedStyles    = Enumerable.Repeat(styleItem,  rows * cols).ToArray();
 
       this.title      = title;
       this.rows       = rows; 
       this.cols       = cols;
       this.styleIndex = styleIndex;
-      //this.foreground = foreground;
-      //this.background = background;
+      this.styles     = styles;
 
       this.setWindowSize = setWindowSize ?? defaultSetWindowSize;
 
@@ -144,7 +143,7 @@ namespace eMeL.ConsoleWindows
 
       Array.Copy(text.ToArray(), 0, displayChars, position, text.Length);
 
-      byte colorByte  = GetStylePacked(ref style);
+      byte colorByte  = GetPackedStyle(ref style);
       var  colorBytes = Enumerable.Repeat(colorByte, maxLen).ToArray();
 
       Array.Copy(colorBytes, 0, packedStyles, position, text.Length);
@@ -153,7 +152,7 @@ namespace eMeL.ConsoleWindows
     }
 
     #region implementation-dependent code 
-    protected PackedStyle GetStylePacked(ref Style style)
+    protected PackedStyle GetPackedStyle(ref Style style)
     {
       int ret = (int)(style.sufficientForeground);
 
@@ -200,7 +199,7 @@ namespace eMeL.ConsoleWindows
       return part;
     }
 
-    protected byte   GetColorByte(int pos)
+    protected PackedStyle   GetPackedStyle(int pos)
     {
       Debug.Assert(pos >= 0);
       Debug.Assert(pos < this.rows * this.cols);
