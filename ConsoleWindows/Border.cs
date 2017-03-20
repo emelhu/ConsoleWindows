@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public struct Border
+  public struct Border : IComparable
   {
     public static Border noFrameBorder = new Border();
 
@@ -93,6 +93,35 @@ namespace eMeL.ConsoleWindows
       }
 
       return false;
+    }
+
+    public int CompareTo(object obj)
+    {
+      int ret = 1;
+
+      if (ReferenceEquals(this, obj))
+      {
+        ret = 0;
+      }
+      else if ((obj != null) && (obj is Border otherBorder))
+      {
+        ret = ((IComparable)this.styleIndex).CompareTo(otherBorder.styleIndex);
+
+        if (ret == 0)
+        {
+          ret = ((IComparable)this.borderChars.Length).CompareTo(otherBorder.borderChars.Length);
+
+          if (ret == 0)
+          {
+            for (int i = 0; ((i < this.borderChars.Length) && (ret == 0)); i++)
+            {
+              ret = ((IComparable)this.borderChars[i]).CompareTo(otherBorder.borderChars[i]);
+            }
+          }
+        }
+      }
+
+      return ret;
     }
   }
 

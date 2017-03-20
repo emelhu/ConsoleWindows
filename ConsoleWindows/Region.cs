@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
@@ -9,21 +10,23 @@ namespace eMeL.ConsoleWindows
   {
     #region private
 
-    private int       _row;
-    private int       _col;
-    private int       _width;
-    private int       _height;
+    private int         _row;
+    private int         _col;
+    private int         _width;
+    private int         _height;
 
-    private StyleIndex _styleIndex;
+    private StyleIndex  _styleIndex = StyleIndex.TextWrite;
     #endregion
 
     #region interface
-    public  int         row         { get { return _row; }          set { _row = value;        IndicateChange(); } }
-    public  int         col         { get { return _col; }          set { _col = value;       IndicateChange(); } }
-    public  int         width       { get { return _width; }        set { _width = value;      IndicateChange(); } }
-    public  int         height      { get { return _height; }       set { _height = value;     IndicateChange(); } }
+    public  int         row         { get { return _row; }          set { IndicateChange(_row    != value);     _row    = value;      } }
+    public  int         col         { get { return _col; }          set { IndicateChange(_col    != value);     _col    = value;      } }
+    public  int         width       { get { return _width; }        set { IndicateChange(_width  != value);     _width  = value;      } }
+    public  int         height      { get { return _height; }       set { IndicateChange(_height != value);     _height = value;      } }
 
-    public  StyleIndex  styleIndex  { get { return _styleIndex; }   set { _styleIndex = value; IndicateChange(); } }
+    public  StyleIndex  styleIndex  { get { return _styleIndex; }   set { IndicateChange(_styleIndex != value); _styleIndex = value;  } }
+
+    public  bool        visible     { get; set; } = true;
 
     public  event  ChangedEventHandler Changed;
 
@@ -66,9 +69,10 @@ namespace eMeL.ConsoleWindows
 
     #region internal operation
 
-    public void IndicateChange()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void IndicateChange(bool valueChanged = true)
     {
-      if (Changed != null)
+      if ((Changed != null) && valueChanged)
       {
         Changed(this);                                                                            // aka: Changed?.Invoke(this);
       }

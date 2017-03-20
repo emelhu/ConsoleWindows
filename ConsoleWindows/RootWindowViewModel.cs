@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
@@ -10,9 +11,10 @@ namespace eMeL.ConsoleWindows
     #region IViewModel implementation
     public event ChangedEventHandler changed;
 
-    public void IndicateChange()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void IndicateChange(bool valueChanged = true)
     {
-      if (changed != null)
+      if ((changed != null) && valueChanged)
       {
         changed(this);                                                                            // aka: Changed?.Invoke(this);
       }

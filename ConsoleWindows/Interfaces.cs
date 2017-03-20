@@ -23,12 +23,14 @@ namespace eMeL.ConsoleWindows
   {   
     event     ChangedEventHandler Changed;
 
-    void                          IndicateChange();
+    void                          IndicateChange(bool valueChanged = true);
   }
 
   public interface IRegion : IPosition, ISize, IChangedEvent
   {   
     StyleIndex styleIndex  { get; set; }
+
+    bool       visible     { get; set; }
   }
 
   public interface IArea : IRegion
@@ -37,32 +39,48 @@ namespace eMeL.ConsoleWindows
     Scrollbars? scrollbars { get; set; }
   }
 
+  public interface IValidating
+  {
+    /// <summary>
+    /// Check this element or window validity.
+    /// </summary>
+    /// <returns>Error text or null if valid.</returns>
+    string IsValid();
+
+    /// <summary>
+    /// Define a function for validate content of element or window.
+    /// It returns a null if no error, or an error text.
+    /// Function receive reference of sender object.
+    /// </summary>
+    Func<Object, string> validate { get; set; }
+  }
+
+  public interface ITabStop
+  {
+    bool    tabStop       { get; set; }
+  }
+
+  public interface IEditable
+  {
+    bool    emptyEnabled  { get; set; }
+
+    bool    readOnly      { get; set; }
+  }
+
   public interface IElement : IRegion
   {
     string  displayText   { get; }
 
-    bool    emptyEnabled  { get; set; }
+    string  text          { get; set; }
 
     string  description   { get; set; }
-
-    /// <summary>
-    /// Define a function for validate content of element.
-    /// It returns a null if no error, or an error text.
-    /// </summary>
-    Func<IElement, string> validate { get; set; }
-
-    /// <summary>
-    /// Check this element validity.
-    /// </summary>
-    /// <returns>Error text or null if valid.</returns>
-    string IsValid();
   }
 
   public interface IViewModel
   {
     event ChangedEventHandler changed;
 
-    void                      IndicateChange();
+    void                      IndicateChange(bool valueChanged = true);
   }
 
   public interface IConsoleMouse
@@ -85,9 +103,10 @@ namespace eMeL.ConsoleWindows
 }
 
 /*
-  void IndicateChange()
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  void IndicateChange(bool valueChanged = true)
   {
-    if (Changed != null)
+    if ((Changed != null) && valueChanged)
     {
       Changed(this);                                                                            // aka: Changed?.Invoke(this);
     }

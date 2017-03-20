@@ -7,15 +7,25 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace eMeL.ConsoleWindows
 {
-  public class Window<TViewModel> : Area, IArea, IRegion, IDisposable
+  public class Window<TViewModel> : Area, IArea, IRegion, IValidating, IDisposable
      where TViewModel : IViewModel
   {
     #region data
 
-    public    TViewModel viewModel   { get; private set; }
+    public    TViewModel viewModel    { get; private set; }
+
+    public    Border?     borderActual            { get { return _borderActual; }            set { IndicateChange(Nullable.Compare(_borderActual, value) != 0); _borderActual = value;             } }
+    private   Border?    _borderActual;
+
+    public    StyleIndex  styleIndexActualWindow  { get { return _styleIndexActualWindow; }  set { IndicateChange(_styleIndexActualWindow != value);            _styleIndexActualWindow = value;  } }
+    private   StyleIndex _styleIndexActualWindow = StyleIndex.WindowActual;
+
+    public    StyleIndex  styleIndexActualElement { get { return _styleIndexActualElement; } set { IndicateChange(_styleIndexActualElement != value);           _styleIndexActualElement = value; } }
+    private   StyleIndex _styleIndexActualElement = StyleIndex.TextElementActual;
 
     public    Window<IViewModel>  parentWindow
     {
@@ -97,20 +107,20 @@ namespace eMeL.ConsoleWindows
     } 
 
     public IElement actualElement 
-      { 
-        get
-        {
-          return _actualRegion as IElement;
-        }
+    { 
+      get
+      {
+        return _actualRegion as IElement;
       }
+    }
 
     public Window<IViewModel> actualChildWindow 
-      { 
-        get
-        {
-          return _actualRegion as Window<IViewModel>;
-        }
+    { 
+      get
+      {
+        return _actualRegion as Window<IViewModel>;
       }
+    }
 
     private IRegion _actualRegion;
     
@@ -131,6 +141,7 @@ namespace eMeL.ConsoleWindows
     public Window(TViewModel viewModel, int row, int col, int width, int height, StyleIndex styleIndex = StyleIndex.Window, Border? border = null, Scrollbars? scrollbars = null)
       : base (row, col, width, height, styleIndex, border, scrollbars)
     {  
+      this.state     = State.Hide;  
       this.viewModel = viewModel;    
 
       if (this.viewModel == null)
@@ -138,7 +149,7 @@ namespace eMeL.ConsoleWindows
         throw new ArgumentException("The 'viewModel' must an IViewModel successor!", nameof(this.viewModel));
       }
 
-      state = State.Editable;                                                                     // default state      
+      this.state = State.Editable;                                                                     // default state      
     }
     
     public Window(TViewModel viewModel, int row, int col, int width, int height, Border? border = null, Scrollbars? scrollbars = null, StyleIndex styleIndex = StyleIndex.Window)
@@ -179,6 +190,11 @@ namespace eMeL.ConsoleWindows
         childWindow._styles      = styles;
         childWindow.parentWindow = this as Window<IViewModel>;;
       }
+
+      if (_actualRegion == null)
+      {
+        ToFirstItem();
+      }
       
       Refresh();
     }
@@ -188,6 +204,11 @@ namespace eMeL.ConsoleWindows
       if (element == null)
       {
         throw new ArgumentException("There is null argumentum!", nameof(element));
+      }
+
+      if (_actualRegion == element)
+      {
+        ToNextItem(false);                                                                        // To previous item
       }
 
       elements.Remove(element);
@@ -204,6 +225,11 @@ namespace eMeL.ConsoleWindows
       if (element is Window<IViewModel> childWindow)
       {
         childWindow.parentWindow = null;
+      }
+
+      if ((_actualRegion == null) || (_actualRegion == element))
+      {
+        ToFirstItem();                                                                            // There isn't a previous element, this element was the first.
       }
       
       Refresh();
@@ -252,7 +278,7 @@ namespace eMeL.ConsoleWindows
     {
       lastChange = Environment.TickCount;
 
-      if (isVisible)
+      if (visible)
       {
         bool dropRequest = refreshWait;
 
@@ -262,7 +288,7 @@ namespace eMeL.ConsoleWindows
 
           while (seeker != null)
           {
-            if (seeker.refreshWait || ! seeker.isVisible)
+            if (seeker.refreshWait || ! seeker.visible)
             {
               dropRequest = true;
               break;
@@ -317,7 +343,7 @@ namespace eMeL.ConsoleWindows
 
     public void Display(bool force = false)
     {
-      if (isVisible)
+      if (visible)
       {
         if ((lastChange > lastRefresh) || force)
         {
@@ -346,11 +372,9 @@ namespace eMeL.ConsoleWindows
 
       foreach (var element in orderedElements)
       {
-        var childWindow = element as Window<IViewModel>;
-
-        if (childWindow != null)
+        if (element is Window<IViewModel> childWindow)
         {
-          if (childWindow.isVisible)
+          if (childWindow.visible)
           {
             //var partInfo2 = new DisplayConsolePartInfo(childWindow, GetStyle(childWindow.styleIndex));
             var partInfo2 = DisplayConsolePartInfo.CreateFrom(childWindow);
@@ -434,7 +458,7 @@ namespace eMeL.ConsoleWindows
       return (state == State.Editable);
     }
 
-    public  bool  isVisible
+    public new bool visible                                                                       // hides Area.visible because it's more complicate
     {
       get
       {
@@ -454,7 +478,29 @@ namespace eMeL.ConsoleWindows
         }
         else
         {
-          return parentWindow.isVisible;                                                          // Warning: recursive call, because not visible if any(!) hidden in link list.
+          return parentWindow.visible;                                                          // Warning: recursive call, because not visible if any(!) hidden in link list.
+        }
+      }
+
+      set
+      {
+        if (value)
+        {
+          if (state == State.Hide)
+          { 
+            state = State.ViewOnly;
+          }
+          else if (state == State.Killed)
+          {
+            throw new Exception("Window.visible = true and state is killed!");
+          }
+        }
+        else
+        {
+          if (VisibleState())
+          {
+            state = State.Hide;
+          }
         }
       }
     }
@@ -463,17 +509,22 @@ namespace eMeL.ConsoleWindows
 
     #region field step / proceed
 
-    private bool IsItemApplicable(IRegion region)
+    private static bool IsItemApplicable(IRegion region)
     {
-      if (region is IElement)  
+      if (region is ITabStop tabStopable)  
       {            
-        return true;
+        return tabStopable.tabStop;
       }
       else if (region is Window<IViewModel> window)
       {
         if (window.EditableState())
         {
-          return true;
+          window.ToFirstItem();
+
+          if (window._actualRegion != null)
+          {
+            return IsItemApplicable(window._actualRegion);
+          }
         }
       }
 
@@ -489,9 +540,9 @@ namespace eMeL.ConsoleWindows
     {
       if (region != null)
       {
-        if (region is IElement element)
+        if (region is IValidating validating)
         {
-          return element.IsValid();
+          return validating.IsValid();
         }
         else if (region is Window<IViewModel> window)
         {
@@ -502,15 +553,27 @@ namespace eMeL.ConsoleWindows
       return null;
     }
 
-    private string IsValid()
+    /// <summary>
+    /// Check this element or window validity.
+    /// </summary>
+    /// <returns>Error text or null if valid.</returns>
+    public string IsValid()
     {
-      foreach (var region in elements)
+      if (state == State.Editable)
       {
-        var errorMessage = IsItemValid(region);
-
-        if (errorMessage != null)
+        foreach (var region in elements)
         {
-          return errorMessage;
+          var errorMessage = IsItemValid(region);
+
+          if (errorMessage != null)
+          {
+            return errorMessage;
+          }
+        }
+
+        if (validate != null)
+        {
+          return validate(this);
         }
       }
 
@@ -555,7 +618,7 @@ namespace eMeL.ConsoleWindows
       }      
     }
 
-    public void ToNextItem(bool nextElement = true)
+    public void ToNextItem(bool previousElement = false)
     {
       if (state == State.Editable)
       { // Appoint prev/next field of window.
@@ -568,7 +631,7 @@ namespace eMeL.ConsoleWindows
 
         bool found = false;
 
-        if (nextElement)
+        if (! previousElement)
         {
           foreach (var region in elements)
           {
@@ -632,36 +695,36 @@ namespace eMeL.ConsoleWindows
     /// example:
     /// StartEditable = (win) => { StartEditableHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> startEditable             { get; set; }
+    public Action<Object>             startEditable             { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is the actual window and it's not editable already or state changed from editable)
     /// example:
     /// StopEditable = (win) => { StopEditableHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> stopEditable              { get; set; }
+    public Action<Object>             stopEditable              { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is visible in display)
     /// example:
     /// StartVisible = (win) => { StartVisibleHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> startVisible              { get; set; }
+    public Action<Object>             startVisible              { get; set; }
 
     /// <summary>
     /// This action fired when state of window changed (this window is not visible in display)
     /// example:
     /// StopVisible = (win) => { StopVisibleHappen(win); };
     /// </summary>
-    public Action<Window<TViewModel>> stopVisible               { get; set; }
+    public Action<Object>             stopVisible               { get; set; }
 
     /// <summary>
     /// Define a function for validate content of Window.
     /// It returns a null if no error, or an error text.
     /// </summary>
-    public Func<Window<IViewModel>, string> validate            { get; set; }
+    public Func<Object, string>       validate                  { get; set; }
 
-    public Func<Window<IViewModel>, bool> closeable             { get; set; }
+    public Func<Object, bool>         closeable                 { get; set; }
 
     #endregion
 

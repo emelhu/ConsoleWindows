@@ -113,22 +113,22 @@ namespace ConsoleWindowsDemo
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
-      var textElement = new TextElement(0, 0, String.Join("", textArray));  
+      var textElement = new TextViewElement(0, 0, String.Join("", textArray));  
       conWin.rootWindow.AddElement(textElement);
 
       for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
       {
-        textElement = new TextElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        textElement = new TextViewElement(rowLoop, 0, (rowLoop % 10).ToString());  
         conWin.rootWindow.AddElement(textElement);
       }
 
-      styles[StyleIndex.User8] = new Style(WinColor.Red,  WinColor.Yellow);
-      styles[StyleIndex.User9] = new Style(WinColor.Blue, WinColor.White);
+      conWin.styles[StyleIndex.User8] = new Style(WinColor.Red,  WinColor.Yellow);
+      conWin.styles[StyleIndex.User9] = new Style(WinColor.Blue, WinColor.White);
 
-      textElement = new TextElement(10, 10, "Pressed key:", StyleIndex.User9);  
+      textElement = new TextViewElement(10, 10, "Pressed key:", StyleIndex.User9);  
       conWin.rootWindow.AddElement(textElement);  
 
-      textElement = new TextElement(10, 24, 40, 1, StyleIndex.User8);  
+      textElement = new TextViewElement(10, 24, 40, 1, StyleIndex.User8);  
       conWin.rootWindow.AddElement(textElement);  
 
       con.ApplyPreviewReadedKey(consoleKeyInfo =>
@@ -171,25 +171,25 @@ namespace ConsoleWindowsDemo
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
-      var textElement = new TextElement(0, 0, String.Join("", textArray));  
+      var textElement = new TextViewElement(0, 0, String.Join("", textArray));  
       conWin.rootWindow.AddElement(textElement);
 
       for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
       {
-        textElement = new TextElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        textElement = new TextViewElement(rowLoop, 0, (rowLoop % 10).ToString());  
         conWin.rootWindow.AddElement(textElement);
       }
 
       var region = new Region(3, 3, 3, 3, ownStyle1);
       var area   = new Area(  6, 6, 6, 6, ownStyle2, new Border(Border.defaultBorderFrameSingle));
 
-      var area2  = new Area( 10, 20, 20, 8, StyleIndex.Default, new Border(Border.defaultBorderFrameVertDoubleHorSingle));
+      var area2  = new Area( 10, 20, 20, 8, StyleIndex.Scrollbar, new Border(Border.defaultBorderFrameVertDoubleHorSingle));
 
       conWin.rootWindow.AddElement(region);
       conWin.rootWindow.AddElement(area);
       conWin.rootWindow.AddElement(area2);
 
-      conWin.rootWindow.AddElement(new TextElement(23, 30, "...press Escape to end..."));
+      conWin.rootWindow.AddElement(new TextViewElement(23, 30, "...press Escape to end..."));
 
       conWin.Start();
     }
@@ -209,11 +209,11 @@ namespace ConsoleWindowsDemo
 
       Thread.Sleep(3000);
 
-      var textElement1 = new TextElement(15, 40, "proba1");
-      var textElement2 = new TextElement(15, 60, "proba2");
+      var textElement1 = new TextEditElement(15, 40, "proba1");
+      var textElement2 = new TextEditElement(15, 60, "proba2");
 
-      var textElement3 = new TextElement(1, 30, "...press Escape to end...");
-      var textElement4 = new TextElement(1, 60, "........", ownStyle3);
+      var textElement3 = new TextViewElement(1, 30, "...press Escape to end...");
+      var textElement4 = new TextViewElement(1, 60, "........", ownStyle3);
 
       conWin.rootWindow.AddElement(textElement2);
       conWin.rootWindow.AddElement(textElement1);

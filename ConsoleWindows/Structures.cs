@@ -21,6 +21,12 @@ namespace eMeL.ConsoleWindows
       this.row  = pos.row; 
       this.col  = pos.col;
     }
+
+    public void Clear()
+    {
+      this.row  = 0; 
+      this.col  = 0;
+    }
   }
 
   public struct Size : ISize

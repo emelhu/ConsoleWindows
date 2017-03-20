@@ -171,6 +171,11 @@ namespace eMeL.ConsoleWindows.Core
       Console.Title           = this.title;
     }
 
+    public override void SetCursorPosition(Position position)
+    {
+      Console.SetCursorPosition(position.col, position.row);
+    }
+
     #region others
 
     public static bool traceEnabled = false;

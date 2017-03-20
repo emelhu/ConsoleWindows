@@ -10,8 +10,8 @@ namespace eMeL.ConsoleWindows
     private Border?     _border;
     private Scrollbars? _scrollbars;
 
-    public  Border?      border      { get { return _border; }       set { _border     = value; IndicateChange(); } }
-    public  Scrollbars?  scrollbars  { get { return _scrollbars; }   set { _scrollbars = value; IndicateChange(); } }
+    public  Border?      border     { get { return _border; }       set { IndicateChange(Nullable.Compare(_border, value)     != 0); _border     = value; } }
+    public  Scrollbars?  scrollbars { get { return _scrollbars; }   set { IndicateChange(Nullable.Compare(_scrollbars, value) != 0); _scrollbars = value; } }
 
     public Area(int row, int col, int width, int height, StyleIndex styleIndex = StyleIndex.Default, Border? border = null, Scrollbars? scrollbars = null)
       : base(row, col, width, height, styleIndex)

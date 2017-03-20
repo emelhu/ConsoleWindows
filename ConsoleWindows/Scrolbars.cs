@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public struct Scrollbars
+  public struct Scrollbars : IComparable
   {
     public const int  numberOfScrollbarsChars = 7;
 
@@ -33,7 +33,7 @@ namespace eMeL.ConsoleWindows
       this.scrollbarsChars = new char[numberOfScrollbarsChars];
       this.styleIndex      = styleIndex;
 
-      //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö 
+      //this.scrollbarsChars.Initialize();                                                              // initialize all element with default value ('\0'Ö 
 
       if ((chars != null) && (chars.Length > 0))
       {
@@ -49,7 +49,7 @@ namespace eMeL.ConsoleWindows
       this.scrollbarsChars = new char[numberOfScrollbarsChars];
       this.styleIndex      = styleIndex;
 
-      //this.borderChars.Initialize();                                                              // initialize all element with default value ('\0'Ö
+      //this.scrollbarsChars.Initialize();                                                              // initialize all element with default value ('\0'Ö
 
       if ((chars != null) && (chars.Length > 0))
       {
@@ -73,6 +73,35 @@ namespace eMeL.ConsoleWindows
       }
 
       return false;
+    }
+
+    public int CompareTo(object obj)
+    {
+      int ret = 1;
+
+      if (ReferenceEquals(this, obj))
+      {
+        ret = 0;
+      }
+      else if ((obj != null) && (obj is Scrollbars otherScrollbars))
+      {
+        ret = ((IComparable)this.styleIndex).CompareTo(otherScrollbars.styleIndex);
+
+        if (ret == 0)
+        {
+          ret = ((IComparable)this.scrollbarsChars.Length).CompareTo(otherScrollbars.scrollbarsChars.Length);
+
+          if (ret == 0)
+          {
+            for (int i = 0; ((i < this.scrollbarsChars.Length) && (ret == 0)); i++)
+            {
+              ret = ((IComparable)this.scrollbarsChars[i]).CompareTo(otherScrollbars.scrollbarsChars[i]);
+            }
+          }
+        }
+      }
+
+      return ret;
     }
   }
 

@@ -211,6 +211,7 @@ namespace eMeL.ConsoleWindows
     #region abstract
 
     public    abstract  void            Display();
+    public    abstract  void            SetCursorPosition(Position position);
 
     protected abstract  bool            KeyAvailable { get; }
     protected abstract  ConsoleKeyInfo  ReadKey();
@@ -340,9 +341,11 @@ namespace eMeL.ConsoleWindows
 
     #region refresh display
 
-    private volatile  bool    refreshWait     = false;   
-    private volatile  int     lastRefresh     = 0;
-    private volatile  int     lastChange      = 0;
+    private volatile  bool      refreshWait     = false;   
+    private volatile  int       lastRefresh     = 0;
+    private volatile  int       lastChange      = 0;
+
+    internal          Position  actualCursorPosition;
 
     public void Refresh()
     {
@@ -393,6 +396,8 @@ namespace eMeL.ConsoleWindows
           #endif
 
           Display();                                                                              // abstract class
+
+          SetCursorPosition(actualCursorPosition);
         }
       }
     }
