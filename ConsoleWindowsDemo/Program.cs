@@ -78,6 +78,11 @@ namespace ConsoleWindowsDemo
           BorderAndAreaTest1();
           break;     
 
+        case 'E':                                                                        
+        case 'e':
+          EditFieldsTest1();
+          break;     
+
         case 'T':                                                                        
         case 't':
           SimpleTest1();
@@ -90,7 +95,7 @@ namespace ConsoleWindowsDemo
    
           break;
       }
-    }
+    }    
 
     public static void DisplayHelp(bool fullText)
     {
@@ -101,6 +106,7 @@ namespace ConsoleWindowsDemo
       }
 
       Console.WriteLine("  'B' : Border and Area test.");
+      Console.WriteLine("  'E' : Edit fields test.");
       Console.WriteLine("  'V' : View and change test.");
       Console.WriteLine("  'T' : A simple test.");
     }    
@@ -194,12 +200,44 @@ namespace ConsoleWindowsDemo
       conWin.Start();
     }
 
+    private static void EditFieldsTest1()
+    {
+      var con    = new CoreConsole("EditFieldsTest1 --- ConsoleWindowsDemo", 25, 80);
+      var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
+
+      conWin.rootWindow.AddElement(new TextViewElement(23, 15, "...press Escape or alt-F4 or ctrl-C to end..."));
+
+      conWin.styles[StyleIndex.User0] = new Style(WinColor.Green, WinColor.Green);
+      conWin.styles[StyleIndex.User1] = new Style(WinColor.Blue,  WinColor.Blue);
+
+      conWin.rootWindow.AddElement(new Region(5,  5, 30, 10, StyleIndex.User0));
+      conWin.rootWindow.AddElement(new Region(5, 40, 30, 10, StyleIndex.User1));
+
+      var textField1 = new TextEditElement( 6, 45, 20, "aaaaaa");
+      var textField2 = new TextEditElement( 7, 45, 20, "bbb");
+      var textField3 = new TextEditElement( 8, 45, 20, "cccccccccc");
+      var textField4 = new TextEditElement( 9, 45, 20, "dd");
+      var textField5 = new TextEditElement(10, 45, 20, "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+      conWin.rootWindow.AddElement(new TextViewElement( 6, 10, "edit 'aaa':"));
+      conWin.rootWindow.AddElement(new TextViewElement( 7, 10, "edit 'bbb':"));
+      conWin.rootWindow.AddElement(new TextViewElement( 8, 10, "edit 'ccc':"));
+      conWin.rootWindow.AddElement(new TextViewElement( 9, 10, "edit 'ddd':"));
+      conWin.rootWindow.AddElement(new TextViewElement(10, 10, "edit 'eee':"));
+
+      conWin.rootWindow.AddElement(textField1);
+      conWin.rootWindow.AddElement(textField2);
+      conWin.rootWindow.AddElement(textField3);
+      conWin.rootWindow.AddElement(textField4);
+      conWin.rootWindow.AddElement(textField5);
+
+      conWin.Start();
+    }
+
     public static void ViewAndCangeTest1()
     { 
       var con    = new CoreConsole("ViewAndCangeTest1 --- ConsoleWindowsDemo", styles);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
-
-      conWin.Start(false);
 
       var region = new Region(3, 10, 10, 10, ownStyle1);
       var area   = new Area(  6, 20, 10, 15, ownStyle2, new Border(Border.defaultBorderFramePattern1));
@@ -209,17 +247,27 @@ namespace ConsoleWindowsDemo
 
       Thread.Sleep(3000);
 
-      var textElement1 = new TextEditElement(15, 40, "proba1");
-      var textElement2 = new TextEditElement(15, 60, "proba2");
+      var textElement1 = new TextEditElement(10, 40, "proba1");
+      var textElement2 = new TextEditElement(10, 60, "proba2");
 
-      var textElement3 = new TextViewElement(1, 30, "...press Escape to end...");
-      var textElement4 = new TextViewElement(1, 60, "........", ownStyle3);
+      var textElement3 = new TextViewElement(23, 30, "...press Escape to end...");
+      var textElement4 = new TextViewElement(1,  60, "........", ownStyle3);
 
-      conWin.rootWindow.AddElement(textElement2);
       conWin.rootWindow.AddElement(textElement1);
+      conWin.rootWindow.AddElement(textElement2);
+      
       conWin.rootWindow.AddElement(textElement4);
       conWin.rootWindow.AddElement(textElement3);
+
+      conWin.rootWindow.AddElement(new TextEditElement(15, 40, "aaaaaaaaaaaaaaa"));
+      conWin.rootWindow.AddElement(new TextEditElement(16, 40, "bbbbb"));
+      conWin.rootWindow.AddElement(new TextEditElement(17, 40, 30, "cccc"));
+      conWin.rootWindow.AddElement(new TextEditElement(18, 40, "ddd"));
+      conWin.rootWindow.AddElement(new TextEditElement(19, 40, 30, "eeeeeeeeeeeeeee"));
+
+      Task task = conWin.Start(false);                                                          // Don't wait
       
+      Thread.Sleep(3000);
 
       region.row += 5;
       area.border = new Border(Border.defaultBorderFramePattern2);
@@ -232,13 +280,20 @@ namespace ConsoleWindowsDemo
 
       textElement2.text = "PROBA2";
 
-      Thread.Sleep(3000);
-
-      for (int i = 0; i < 100; i++)
+      Task.Run(() =>
       {
-        textElement4.text = (i).ToString();
-        Thread.Sleep(1000);
-      }      
+        for (int i = 0; i < 100; i++)
+        {
+          textElement4.text = (i).ToString();
+          Thread.Sleep(1000);
+        }
+      });  
+      
+      task.Wait();
+
+      textElement3.text = "  !!!! STOPPED !!!!";
+
+      Thread.Sleep(10000);
     }
   }
 }

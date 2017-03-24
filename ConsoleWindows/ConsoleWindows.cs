@@ -384,7 +384,7 @@ namespace eMeL.ConsoleWindows
 
     private CancellationTokenSource cancellationTokenSource;
 
-    public void Start(bool wait = true)
+    public Task Start(bool wait = true)
     {
       cancellationTokenSource = new CancellationTokenSource();
       var cancellationToken = cancellationTokenSource.Token;
@@ -571,6 +571,8 @@ namespace eMeL.ConsoleWindows
       {
         task.Wait();                                                                                // cancellationTokenSource.Cancel() for stop waiting
       }
+
+      return task;
     }
 
     public void Stop()
