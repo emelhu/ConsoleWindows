@@ -341,10 +341,15 @@ namespace eMeL.ConsoleWindows
       Refresh();
     }
 
-    public void Display(bool force = false)
+    public void Display(bool force = false, bool priority = false)
     {
       if (visible)
       {
+        if (priority)
+        {
+          lastChange = Environment.TickCount - 66;                                                // optimalize if more then 15 times in sec is happen this call --- containing the amount of time in milliseconds...
+        }
+
         if ((lastChange > lastRefresh) || force)
         {
           lastRefresh = Environment.TickCount;                                                    // start time of refresh
@@ -628,22 +633,21 @@ namespace eMeL.ConsoleWindows
           return;
         }
 
-
         bool found = false;
 
         if (! previousElement)
         {
+          if ((_actualRegion == null) || (IsItemValid(_actualRegion) != null))
+          {
+            return;
+          }
+
           foreach (var region in elements)
           {
             if (found)
             {
               if (IsItemApplicable(region))  
-              {
-                if (IsItemValid(_actualRegion) != null)
-                {
-                  return;
-                }
-         
+              {        
                 _actualRegion = region;
                 break;
               }

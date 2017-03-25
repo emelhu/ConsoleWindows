@@ -604,6 +604,8 @@ namespace eMeL.ConsoleWindows
           }
         }
       }
+
+      actualWindow.Display(false, true);                                                          // Don't force, but with priority
     }
     #endregion
 
