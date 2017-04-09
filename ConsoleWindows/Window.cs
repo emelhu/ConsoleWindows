@@ -208,7 +208,17 @@ namespace eMeL.ConsoleWindows
 
       if (_actualRegion == element)
       {
-        ToNextItem(false);                                                                        // To previous item
+        ToPrevItem();                                                                              
+
+        if (_actualRegion == element)
+        {
+          ToNextItem();
+        }
+
+        if (_actualRegion == element)
+        {
+          _actualRegion = null;
+        }
       }
 
       elements.Remove(element);
@@ -341,13 +351,15 @@ namespace eMeL.ConsoleWindows
       Refresh();
     }
 
+    private const int repeateCountPerSec = 15;
+
     public void Display(bool force = false, bool priority = false)
     {
       if (visible)
       {
         if (priority)
         {
-          lastChange = Environment.TickCount - 66;                                                // optimalize if more then 15 times in sec is happen this call --- containing the amount of time in milliseconds...
+          lastChange = Environment.TickCount - (1000 / repeateCountPerSec);                       // optimalize if more then 15 times in sec is happen this call --- containing the amount of time in milliseconds...
         }
 
         if ((lastChange > lastRefresh) || force)
@@ -623,67 +635,69 @@ namespace eMeL.ConsoleWindows
       }      
     }
 
-    public void ToNextItem(bool previousElement = false)
+    public void ToNextItem()
     {
       if (state == State.Editable)
-      { // Appoint prev/next field of window.
+      {  
+        if (_actualRegion == null)
+        {
+          ToFirstItem();
+          return;
+        }
+        else if (IsItemValid(_actualRegion) != null) 
+        { // This field content isn't valid, can't skip to next 
+          return;
+        }
+
+        bool found = false;
+
+        foreach (var region in elements)
+        {
+          if (found)
+          {
+            if (IsItemApplicable(region))  
+            {        
+              _actualRegion = region;
+              break;
+            }
+          }
+          else
+          {
+            found = (region == _actualRegion);
+          }
+        }   
+      }  
+      else
+      {
+        _actualRegion = null;
+      }
+    }
+
+    public void ToPrevItem()
+    {
+      if (state == State.Editable)
+      { 
         if (_actualRegion == null)
         {
           ToFirstItem();
           return;
         }
 
-        bool found = false;
+        IRegion prevRegion = _actualRegion;                                                       // stay here if not found previous field
 
-        if (! previousElement)
+        foreach (var region in elements)
         {
-          if ((_actualRegion == null) || (IsItemValid(_actualRegion) != null))
-          {
-            return;
+          if (region == _actualRegion)
+          { // Found current
+            _actualRegion = prevRegion;
+            break;
           }
 
-          foreach (var region in elements)
+          if (IsItemApplicable(region))  
           {
-            if (found)
-            {
-              if (IsItemApplicable(region))  
-              {        
-                _actualRegion = region;
-                break;
-              }
-            }
-            else
-            {
-              found = (region == _actualRegion);
-            }
-          }
-        }
-        else
-        { // prev
-          IRegion prevRegion = null;
-
-          foreach (var region in elements)
-          {
-            if (region == _actualRegion)
-            {
-              found         = (prevRegion != null);
-              _actualRegion = prevRegion;
-
-              break;
-            }
-
-            if (IsItemApplicable(region))  
-            {
-              prevRegion = region;
-            }            
-          }
+            prevRegion = region;
+          }              
         } 
-        
-
-        if (! found)
-        {
-          ToFirstItem();
-        }          
       }  
       else
       {

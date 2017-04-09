@@ -25,6 +25,8 @@ namespace eMeL.ConsoleWindows
 
     public bool   tabStop                   { get; set; } = false;
 
+    public Func<Object, bool>   enterCatch  { get; set; }
+
     #region constructors
 
     public TextViewElement(Region region, string text = null)

@@ -9,6 +9,7 @@ namespace eMeL.ConsoleWindows.Core
 {
   using System.Diagnostics;
   using System.Text;
+  using System.Threading;
   using eMeL.ConsoleWindows;
 
   public class CoreConsole : VirtualConsole
@@ -81,6 +82,51 @@ namespace eMeL.ConsoleWindows.Core
       return Console.ReadKey(true);
     }
 
+    public    override void           Sound(BeepMode mode)
+    {
+      switch (mode)
+      {
+        case BeepMode.Standard:
+          Console.Beep();
+          break;
+
+        case BeepMode.Click:
+          Console.Beep(220, 25);
+          break;
+
+        case BeepMode.DeepBip:
+          Console.Beep(440, 50);
+          break;
+
+        case BeepMode.Bip:
+          Console.Beep(880, 50);
+          break;
+
+        case BeepMode.BipBip:
+          Console.Beep(880, 50);
+          Thread.Sleep(80);                                                        
+          Console.Beep(880, 50); 
+          break;
+
+        case BeepMode.Warning:
+          Console.Beep();
+          break;
+
+        case BeepMode.Error:
+          Console.Beep();
+          break;
+
+        default:
+          Console.Beep();
+          break;
+      }   
+    }
+
+    public override void Clear()
+    {
+      Console.Clear();
+    }
+
     public override void Display()
     {
       if (traceEnabled)
@@ -88,6 +134,7 @@ namespace eMeL.ConsoleWindows.Core
         Trace.WriteLine(">> CoreConsole.Display: " + Environment.TickCount.ToString());
       }
 
+      Console.Clear();
       Console.SetCursorPosition(0, 0);                                
 
       int   colorByte        = 0;

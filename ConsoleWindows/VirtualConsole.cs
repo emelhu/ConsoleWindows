@@ -11,8 +11,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-
-
 namespace eMeL.ConsoleWindows
 {
   using PackedStyle = System.Byte;                                                                // implementation-dependent code 
@@ -216,6 +214,33 @@ namespace eMeL.ConsoleWindows
     protected abstract  bool            KeyAvailable { get; }
     protected abstract  ConsoleKeyInfo  ReadKey();
 
+    public    abstract  void            Sound(BeepMode mode);
+
+    public    abstract  void            Clear();
+
+    #endregion
+
+    #region sound
+
+    private   Object   soundLock  = new object();
+
+    public    void                      Sound(bool wait, BeepMode mode = BeepMode.Standard)
+    {
+      if (wait)
+      {
+        lock (soundLock)
+        {
+          Task.Run(() =>
+            {
+              Sound(mode);
+            });
+        }
+      }
+      else
+      {
+        Sound(mode);
+      }
+    }
     #endregion
 
     #region keyboard management
@@ -405,9 +430,20 @@ namespace eMeL.ConsoleWindows
 
     #region others
 
-    #if USE_traceEnabled
+#if USE_traceEnabled
     public static bool traceEnabled = true;
-    #endif
+#endif
     #endregion
+
+    public enum BeepMode
+    {
+      Standard,
+      Click,
+      DeepBip,
+      Bip,
+      BipBip,
+      Warning,
+      Error
+    }
   }
 }

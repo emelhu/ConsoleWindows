@@ -57,23 +57,37 @@ namespace eMeL.ConsoleWindows
 
   public interface ITabStop
   {
-    bool    tabStop       { get; set; }
+    bool      tabStop       { get; set; }
+
+    /// <summary>
+    /// Define a function for catch an enter-key (for example to close window).
+    /// </summary>
+    Func<Object, bool> enterCatch { get; set; }
   }
 
   public interface IEditable
   {
-    bool    emptyEnabled  { get; set; }
+    bool      emptyEnabled  { get; set; }                                                   
 
-    bool    readOnly      { get; set; }
+    bool      readOnly      { get; set; }
+
+    EditMode  editMode      { get; set; }
+
+    int       maxEditLength { get; set; }
+
+    int       decimalDigits { get; set; }
+
+    dynamic   minValue      { get; set; }
+    dynamic   maxValue      { get; set; }
   }
 
   public interface IElement : IRegion
   {
-    string  displayText   { get; }
+    string    displayText   { get; }
 
-    string  text          { get; set; }
+    string    text          { get; set; }
 
-    string  description   { get; set; }
+    string    description   { get; set; }
   }
 
   public interface IViewModel

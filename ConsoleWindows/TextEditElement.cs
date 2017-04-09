@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Dynamic ;                                                    // Install-Package System.Dynamic.Runtime 
 
 namespace eMeL.ConsoleWindows
 {
@@ -26,15 +27,26 @@ namespace eMeL.ConsoleWindows
     /// Define a function for validate content of TextElement.
     /// It returns a null if no error, or an error text.
     /// </summary>
-    public Func<Object, string> validate    { get; set; }
+    public Func<Object, string> validate      { get; set; }
 
-    public bool   emptyEnabled              { get; set; } = true;
+    public bool     emptyEnabled              { get; set; } = true;
 
-    public string description               { get; set; }
+    public string   description               { get; set; }
 
-    public bool   readOnly                  { get; set; } = false;
+    public bool     readOnly                  { get; set; } = false;
 
-    public bool   tabStop                   { get; set; } = true;
+    public EditMode editMode                  { get; set; } = EditMode.Text;
+
+    public int      maxEditLength             { get; set; }
+
+    public int      decimalDigits             { get; set; } = 0;
+
+    public bool     tabStop                   { get; set; } = true;
+
+    public dynamic  minValue                  { get; set; } = null;
+    public dynamic  maxValue                  { get; set; } = null;
+
+    public Func<Object, bool>   enterCatch    { get; set; }
 
     #region constructors
 
