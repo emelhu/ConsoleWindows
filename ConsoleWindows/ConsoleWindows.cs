@@ -111,19 +111,19 @@ namespace eMeL.ConsoleWindows
 
     #region statics
 
-    public static ElementDescriptionInfo? GetDescription(Type type)
-    {
-      var attribute = type.GetTypeInfo().GetCustomAttribute<ElementDescriptionAttribute>();
+    //public static ElementDescriptionInfo? GetDescription(Type type)
+    //{
+    //  var attribute = type.GetTypeInfo().GetCustomAttribute<ElementDescriptionAttribute>();
 
-      if (attribute == null)
-      {
-        return null;
-      }
-      else
-      {
-        return attribute.description;
-      }
-    }
+    //  if (attribute == null)
+    //  {
+    //    return null;
+    //  }
+    //  else
+    //  {
+    //    return attribute.description;
+    //  }
+    //}
 
     internal void DisplayPart(ref DisplayConsolePartInfo partInfo)
     {
@@ -347,7 +347,9 @@ namespace eMeL.ConsoleWindows
 
     #region Start/Process
 
-    static string defaultCtrlC_Question = "Indeed interrupts the program run?";
+    public static string defaultCtrlC_Question   = "Do you interrupts the program run?";
+    public static string defaultLeave_Question   = "Do you leave the window?";
+    public static bool   defaultLeaveQuestionAsk = false;
 
     private void ExitWindowProcess()
     {
@@ -389,7 +391,7 @@ namespace eMeL.ConsoleWindows
 
       var task = Task.Run((Action)(() =>
         {
-          while (!cancellationToken.IsCancellationRequested)
+          while (! cancellationToken.IsCancellationRequested)
           {
             Debug.Assert(this.actualWindow != null);
 
@@ -407,309 +409,45 @@ namespace eMeL.ConsoleWindows
 
               this.actualWindow = this.actualWindow.parentWindow;
             }
- 
-            IEditable editable          = this.actualWindow.actualElement as IEditable;   
-            bool      isMultilineEdit   = false;   
 
-            if (editable != null)
-            {
-              isMultilineEdit = this.actualWindow.actualElement.height > 1;
-            }
+            //
+
+            IEditable       editable        = this.actualWindow.actualElement as IEditable;   
 
             ConsoleKeyInfo? keyInfoNullable = this.virtualConsole.ReadKeyEx(cancellationToken);
 
-            if (keyInfoNullable != null)
+            virtualConsole.Sound(true, VirtualConsole.BeepMode.Click);
+            this.DisplayMessage(null, MessageType.description);
+
+            if (editable != null)
             {
-              virtualConsole.Sound(true, VirtualConsole.BeepMode.Click);
-              this.DisplayMessage(null, MessageType.error);
+              keyInfoNullable = ProcessKeyPress(keyInfoNullable, false);
 
-              ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
+              if (keyInfoNullable != null) 
+              {          
+                keyInfoNullable = editable.KeyPress((ConsoleKeyInfo)keyInfoNullable);
+                keyInfoNullable = ProcessKeyPress(keyInfoNullable, true);
 
-              switch (keyInfo.Key)
-              {
-                case ConsoleKey.Escape:
-                  this.ExitWindowProcess();
-                  break;
+                #region sample
 
-                case ConsoleKey.F4:                                                               // Alt-F4
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0)
-                  {
-                    this.ExitWindowProcess();
-                  }
-                  break;
+                //if (keyInfoNullable != null)
+                //{
+                //  ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
 
-                case ConsoleKey.C:                                                                // ctrl-C
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)
-                  {
-                    if (this.AskBool(defaultCtrlC_Question))
-                    {
-                      this.cancellationTokenSource.Cancel();
-                    }
-                  }
-                  break;
+                //  bool controlKey = ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0);
+                //  bool shiftKey = ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0);
+                //  bool altKey = ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0);
 
-                case ConsoleKey.Enter:
-                case ConsoleKey.Tab:
-                  bool shiftKey = ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0);            // Shift-tab to previous item 
-                  
-                  ElementPositioning(shiftKey ? ElementPositioningType.Prev: ElementPositioningType.Next);
-                  break;
-
-                case ConsoleKey.Home:
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.First);
-                  }
-                  else if (editable != null)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  break;
-
-                case ConsoleKey.End:
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-End: to last item
-                  {
-                    ElementPositioning(ElementPositioningType.Last);
-                  }
-                  else if (editable != null)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  break;
-
-                case ConsoleKey.LeftArrow:                                                        // to left character in edit field
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.Prev);
-                  }
-                  else if (editable != null)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  else 
-                  {
-                    ElementPositioning(ElementPositioningType.Prev);
-                  }
-                  break;
-
-                case ConsoleKey.RightArrow:                                                       // to right character in edit field
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.Next);
-                  }
-                  else if (editable != null)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  else 
-                  {
-                    ElementPositioning(ElementPositioningType.Next);
-                  }
-                  break;
-
-                case ConsoleKey.UpArrow:                                                          // to previous line in multiline edit field
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.Prev);
-                  }
-                  else if (isMultilineEdit)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  else
-                  {
-                    ElementPositioning(ElementPositioningType.Prev);
-                  }
-                  break;
-
-                case ConsoleKey.DownArrow:                                                        // to next line in multiline edit field
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.Prev);
-                  }
-                  else if (isMultilineEdit)
-                  {
-                    int dummy = 0;      // TODO: ...!!!...
-                  }
-                  else
-                  {
-                    ElementPositioning(ElementPositioningType.Next);
-                  }
-                  break;
-
-                case ConsoleKey.PageUp:
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.First);
-                  }
-                  else if (isMultilineEdit)
-                  {
-                    // TODO: if multiline edit
-                  }
-                  else
-                  {
-                    ElementPositioning(ElementPositioningType.First);
-                  }
-                  break;
-
-                case ConsoleKey.PageDown:
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0)                        // Ctrl-Home: to first item
-                  {
-                    ElementPositioning(ElementPositioningType.Last);
-                  }
-                  else if (isMultilineEdit)
-                  {
-                    // TODO: if multiline edit
-                  }
-                  else
-                  {
-                    ElementPositioning(ElementPositioningType.Last);
-                  }
-                  break;
-
-                case ConsoleKey.Backspace:                                                        // delete previous character of edit field
-                  this.DisplayMessage(null, MessageType.error);
-                  break;
-
-                case ConsoleKey.Delete:                                                           // delete actual character of edit field
-                  this.DisplayMessage(null, MessageType.error);
-                  break;
-
-                case ConsoleKey.Insert:                                                           // change insert mode or insert a blank character of edit field                  
-                  if ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0)
-                  {
-                    ElementTextModify(' ', true);  
-                    ElementPositionModify(ElementPositionModifyMode.NextColumn);
-                  }                  
-                  else
-                  { // switch insert/replace
-                    if (insertKeyMode == InsertKeyMode.InsertMode)
-                    {
-                      insertKeyMode = InsertKeyMode.ReplaceMode;
-                    }
-                    else  
-                    {
-                      insertKeyMode = InsertKeyMode.InsertMode;
-                    }
-                  }
-                  break;
-
-                case ConsoleKey.Clear:                                                            // shift-numpad5
-                case ConsoleKey.OemClear:                                                         // clear content of field
-                  break;
-
-                case ConsoleKey.Decimal   when (editable != null) && (editable.editMode == EditMode.Decimal):
-                case ConsoleKey.OemPeriod when (editable != null) && (editable.editMode == EditMode.Decimal):
-                case ConsoleKey.OemComma  when (editable != null) && (editable.editMode == EditMode.Decimal):           
-                  // change part of real number (integer <--> decimal)
-                  break;
-
-                case ConsoleKey.Subtract  when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                      
-                case ConsoleKey.OemMinus  when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                      
-                  // change to negative presage (integer/real field)
-                  break;
-
-                case ConsoleKey.Add       when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                            
-                case ConsoleKey.OemPlus   when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):
-                  // change to positive presage (integer/real field)
-                  break;
-
-                case ConsoleKey.F1:                                                               // Help
-                  break;
-
-                case ConsoleKey.F12:    
-                  this.virtualConsole.Refresh();                                                  // request// Refresh display                
-                  
-                  //if (((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0) ||
-                  //    ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0) ||
-                  //    ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0))
-                  //{
-                  //  //
-                  //}
-
-                  break;
-
-                default:
-                  if (editable != null)
-                  {
-                    switch (editable.editMode)
-                    {
-                      case EditMode.Text:
-                        if (!Char.IsControl(keyInfo.KeyChar))
-                        {
-                          UnicodeCategory unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(keyInfo.KeyChar);
-                          bool isEditableChar = enabledEditTextUnicodeCategories.Contains(unicodeCategory);
-
-                          // TODO: character filter available
-
-                          if (isEditableChar)
-                          {
-                            ElementTextModify(keyInfo.KeyChar);
-
-                            if (insertKeyMode == InsertKeyMode.ReplaceMode)
-                            {
-                              ElementPositionModify(ElementPositionModifyMode.NextColumn);
-                            }
-                          }
-                          else
-                          {
-                            virtualConsole.Sound(false, VirtualConsole.BeepMode.BipBip);
-                          }
-                        }
-                        break;
-
-                      case EditMode.Integer:
-                        // ConsoleKey.Subtract,ConsoleKey.OemMinus,ConsoleKey.Add,ConsoleKey.OemPlus already handled
-                        // TODO: ...!!!...
-                        int dummy_EditModeInteger = 0;
-
-                        if (Char.IsDigit(keyInfo.KeyChar))
-                        {
-                          ElementPositionModify(ElementPositionModifyMode.NextColumn);
-                        }
-                        break;
-
-                      case EditMode.Decimal:
-                        // TODO: ...!!!...
-                        int dummy_EditModeDecimal = 0;
-
-                        if (Char.IsDigit(keyInfo.KeyChar))
-                        {
-
-                        }
-                        break;
-
-                      case EditMode.Date:
-                        // TODO: ...!!!...
-                        int dummy_EditModeDate = 0;
-
-                        if (Char.IsDigit(keyInfo.KeyChar))
-                        {
-
-                        }
-                        break;
-
-                      case EditMode.Time:
-                        // TODO: ...!!!...
-                        int dummy_EditModeTime = 0;
-
-                        if (Char.IsDigit(keyInfo.KeyChar))
-                        {
-
-                        }
-                        break;
-
-                      case EditMode.Bool:
-                        // TODO: ...!!!...
-                        int dummy_EditModeBool = 0;
-                        break;
-
-                      default:
-                        throw new NotImplementedException("element/editable.editMode: did not handle value!");
-                    }
-                  }
-                  break;
+                //  switch (keyInfo.Key)
+                //  {
+                //  } 
+                //}
+                #endregion
               }
+            }
+            else
+            {
+              keyInfoNullable = ProcessKeyPress(keyInfoNullable, true);
             }
           }
         }), cancellationToken);
@@ -722,156 +460,144 @@ namespace eMeL.ConsoleWindows
       return task;
     }
 
-    private void ElementTextModify(char chr)
+    private ConsoleKeyInfo? ProcessKeyPress(ConsoleKeyInfo? keyInfoNullable, bool fullProcess)
     {
-      ElementTextModify(chr, (insertKeyMode == InsertKeyMode.InsertMode));
-    }
+      if (keyInfoNullable != null)
+      {                                                                                     // Handle super keys --- it works without it is tested by Element
+        ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
 
-    private enum ElementPositionModifyMode
-    {
-      NextColumn,
-      PrevColumn,
-      NextRow,
-      PrevRow
-    }
+        bool controlKey = ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0);
+        bool shiftKey   = ((keyInfo.Modifiers & ConsoleModifiers.Shift)   != 0);
+        bool altKey     = ((keyInfo.Modifiers & ConsoleModifiers.Alt)     != 0);
 
-    private void ElementPositionModify(ElementPositionModifyMode mode = ElementPositionModifyMode.NextColumn)
-    {
-      switch (mode)
-      {
-        case ElementPositionModifyMode.NextColumn:
-          if (true)
-          {
-            desktop.actualElementCol++;
-          }
-          else
-          {
-            Debug.WriteLine("ElementPositionModify(): NextColumn skipped!");
-          }
-          break;
-        case ElementPositionModifyMode.PrevColumn:
-          if (true)
-          {
-            desktop.actualElementCol--;
-          }
-          else
-          {
-            Debug.WriteLine("ElementPositionModify(): PrevColumn skipped!");
-          }
-          break;
-        case ElementPositionModifyMode.NextRow:
-          if (true)
-          {
-            desktop.actualElementRow++;
-          }
-          else
-          {
-            Debug.WriteLine("ElementPositionModify(): NextRow skipped!");
-          }
-          break;
-        case ElementPositionModifyMode.PrevRow:
-          if (true)
-          {
-            desktop.actualElementRow--;
-          }
-          else
-          {
-            Debug.WriteLine("ElementPositionModify(): PrevRow skipped!");
-          }
-          break;
-        default:
-          Debug.Fail("ElementPositionModify(): Invalid ElementPositionModifyMode parameter value (" + mode.ToString() + ")");
-          break;
-
-        // TODO: there isn't inplemented
-      }
-    }
-
-    private void ElementTextModify(char chr, bool insert)
-    {
-      if (this.actualWindow.actualElement is IEditable editable)
-      {
-        if (editable.editMode != EditMode.Text)
+        switch (keyInfo.Key)
         {
-          insert = false;
-          Debug.Fail("ElementTextModify(): editable.editMode != EditMode.Text ");
-        }
+          case ConsoleKey.Escape:                                                           // Exit window --- Escape
+            virtualConsole.Sound(true, VirtualConsole.BeepMode.Warning);
+            this.DisplayMessage(null, MessageType.ask);
 
-        if (!editable.readOnly)
-        {
-          string    textLine  = this.actualWindow.actualElement.text;
-          string[]  lines     = null;
-
-          int       actualElementCol = desktop.actualElementCol;
-          int       actualElementRow = desktop.actualElementRow;
-
-          if (actualElementRow > 0)
-          { // Multiline text
-            lines = textLine.Split(new string[] { "\n", Environment.NewLine }, StringSplitOptions.None);
-
-            if (this.actualWindow.actualElement is IScrollbarInfo scrollbarInfo)
-            { // scrollable window 
-              if ((scrollbarInfo != null) && (scrollbarInfo.verticalPosition != null))
-              {
-                throw new NotImplementedException();                                          // TODO: scrollable window don't checked yet
-              }
-            }
-
-            if (actualElementRow > lines.Length)
+            if (! this.actualWindow.leaveQuestionAsk || this.AskBool(defaultLeave_Question))
             {
-              textLine = String.Empty;
-
-              Array.Resize(ref lines, actualElementRow);
+              this.ExitWindowProcess();
+              keyInfoNullable = null;
             }
-            else
+
+            break;
+
+          case ConsoleKey.F4 when altKey:                                                   // Exit Window --- Alt-F4                 
+            virtualConsole.Sound(true, VirtualConsole.BeepMode.Warning);
+            this.DisplayMessage(null, MessageType.ask);
+
+            if (! this.actualWindow.leaveQuestionAsk || this.AskBool(defaultLeave_Question))
             {
-              textLine = lines[actualElementRow];       // TODO: it's not scollable
+              this.ExitWindowProcess();
+              keyInfoNullable = null;
             }
 
-            if (actualElementCol > textLine.Length)
+            break;
+
+          case ConsoleKey.C when controlKey:                                                      // Exit program --- ctrl-C
+            virtualConsole.Sound(true, VirtualConsole.BeepMode.Warning);
+            this.DisplayMessage(null, MessageType.ask);
+
+            if (this.AskBool(defaultCtrlC_Question))
             {
-              textLine = textLine + new string(' ', actualElementCol - textLine.Length);
+              this.cancellationTokenSource.Cancel();
+              keyInfoNullable = null;
             }
-          }
 
-          var builder = new StringBuilder(textLine, textLine.Length + 1);
+            break;
 
-          if (insert)
-          {
-            if ((editable.maxEditLength <= 0) || (this.actualWindow.actualElement.text.Length < editable.maxEditLength))
-            { // There isn't constrain of maximal length or actial length smaller then maximal              
-              if (insertKeyMode != InsertKeyMode.InsertMode)
-              {
-                builder.Insert(actualElementCol, chr);                
-              }
-            }
-            else
+          case ConsoleKey.F12:
+            this.virtualConsole.Refresh();                                                        // Refresh display request 
+            keyInfoNullable = null;
+            break;
+
+          case ConsoleKey.F1:                                                                     // Help
+          case ConsoleKey.Clear:                                                                  // shift-numpad5
+          case ConsoleKey.OemClear:                                                               // clear content of field
+            break;
+
+          case ConsoleKey.Enter:                                                                   
+          case ConsoleKey.Tab:           
+            if (controlKey || fullProcess)                                                        // not processed Enter/tab or Ctrl-Enter/Ctrl-Tab                                                                
             {
-              virtualConsole.Sound(false, VirtualConsole.BeepMode.BipBip);
-            }
-          }
-          else
-          {
-            builder[actualElementCol] = chr;
-          }
+              ElementPositioning(shiftKey ? ElementPositioningType.Prev : ElementPositioningType.Next);      // next item or Shift-key to previous item
+              keyInfoNullable = null;
+            }            
+            break;
 
+          case ConsoleKey.Home:
+            if (controlKey || fullProcess)                                                        // not processed Home or Ctrl-Home: to first item
+            {
+              ElementPositioning(ElementPositioningType.First);
+              keyInfoNullable = null;
+            }            
+            break;
 
-          if (actualElementRow > 0)
-          {
-            lines[actualElementRow] = builder.ToString();
-            this.actualWindow.actualElement.text = string.Join("\n", lines);
-          }
-          else
-          {
-            this.actualWindow.actualElement.text = builder.ToString();
-          }
+          case ConsoleKey.End:
+            if (controlKey || fullProcess)                                                        // not processed End or Ctrl-End: to last item
+            {
+              ElementPositioning(ElementPositioningType.Last);
+              keyInfoNullable = null;
+            }            
+            break;
+
+          case ConsoleKey.UpArrow:
+            if (controlKey || fullProcess)                                                        // not processed Up or Ctrl-Up to previout item
+            {
+              ElementPositioning(ElementPositioningType.Prev);
+              keyInfoNullable = null;
+            }            
+            break;
+
+          case ConsoleKey.DownArrow:                                                              // not processed Down or Ctrl-Down to next item                                                        
+            if (controlKey || fullProcess) 
+            {
+              ElementPositioning(ElementPositioningType.Next);
+              keyInfoNullable = null;
+            }            
+            break;
+
+          case ConsoleKey.PageUp:
+            if (controlKey || fullProcess)                                                        // not processed PgUp or Ctrl-PgUp: to first item
+            {
+              ElementPositioning(ElementPositioningType.First);
+              keyInfoNullable = null;
+            }            
+            break;
+
+          case ConsoleKey.PageDown:
+            if (controlKey || fullProcess)                                                        // not processed Home or Ctrl-Home: to first item
+            {
+              ElementPositioning(ElementPositioningType.Last);
+              keyInfoNullable = null;
+            }            
+            break;
+
+          case ConsoleKey.Insert when shiftKey:                                                   // reserved to TextEditElement
+            break;
+
+          case ConsoleKey.Insert:        
+            insertKeyMode = ! insertKeyMode;
+            keyInfoNullable = null;
+            break;
+
+            //case ConsoleKey.Backspace:                                                        // delete previous character of edit field                 
+            //case ConsoleKey.Delete:                                                           // delete actual character of edit field                 
+            //case ConsoleKey.Insert:                                                           // change insert mode or insert a blank character of edit field                  
+            //case ConsoleKey.Decimal   when (editable != null) && (editable.editMode == EditMode.Decimal):
+            //case ConsoleKey.OemPeriod when (editable != null) && (editable.editMode == EditMode.Decimal):
+            //case ConsoleKey.OemComma  when (editable != null) && (editable.editMode == EditMode.Decimal):           
+            //case ConsoleKey.Subtract  when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                      
+            //case ConsoleKey.OemMinus  when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                      
+            //case ConsoleKey.Add       when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                                                            
+            //case ConsoleKey.OemPlus   when (editable != null) && ((editable.editMode == EditMode.Decimal) || (editable.editMode == EditMode.Integer)):                  
         }
       }
-      else
-      {
-        virtualConsole.Sound(true, VirtualConsole.BeepMode.BipBip);
-      }
-    }
+
+      return keyInfoNullable;
+    }    
 
     public void Stop()
     {
@@ -892,6 +618,9 @@ namespace eMeL.ConsoleWindows
     private void ElementPositioning(ElementPositioningType type)
     {
       Debug.Assert(this.actualWindow != null);
+
+      virtualConsole.Sound(true, VirtualConsole.BeepMode.BipBip);
+      this.DisplayMessage(null, MessageType.description);
 
       switch (type)
       {
@@ -942,8 +671,20 @@ namespace eMeL.ConsoleWindows
 
     private void SetVirtualConsoleCursorPosition(ref DisplayConsolePartInfo partInfo)
     {
-      virtualConsole.actualCursorPosition.row = partInfo.row + desktop.actualElementRow;
-      virtualConsole.actualCursorPosition.col = partInfo.col + desktop.actualElementCol;
+      var editElement = actualWindow.actualElement as TextEditElement;
+      int relativeRow = 0;
+      int relativeCol = 0;
+
+      if (editElement != null)
+      {
+        var relativePosition = editElement.CursorPosition;
+
+        relativeRow = relativePosition.row;
+        relativeCol = relativePosition.col;
+      }
+      
+      virtualConsole.actualCursorPosition.row = partInfo.row + relativeRow;
+      virtualConsole.actualCursorPosition.col = partInfo.col + relativeCol;
     }
     #endregion
 
@@ -1223,7 +964,10 @@ namespace eMeL.ConsoleWindows
     #endregion
 
     #region message texts
-    public static string errorText_Empty = "Do not leave empty this element!";
+    public static string errorText_Empty      = "Do not leave empty this element!";
+    public static string errorText_MinValue   = "The value less then minimal! [{0}]";
+    public static string errorText_MaxValue   = "The value more then maximal! [{0}]";
+    public static string errorText_MaxLength  = "The length more then maximal! [{0}]";
     #endregion
 
     #endregion
@@ -1254,8 +998,7 @@ namespace eMeL.ConsoleWindows
 
     #region mode
 
-    public static InsertKeyMode insertKeyModeDefault  = InsertKeyMode.ReplaceMode;
-    public        InsertKeyMode insertKeyMode         = insertKeyModeDefault;
+    public static bool insertKeyMode = true;
 
     #endregion
   }

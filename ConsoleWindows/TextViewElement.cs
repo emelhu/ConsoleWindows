@@ -4,16 +4,16 @@ using System.Text;
 
 namespace eMeL.ConsoleWindows
 {
-  [ElementDescriptionAttribute(false, false)]                                                     // not editable, and don't use viewmodel
+  //[ElementDescriptionAttribute(false, false)]                                                     // not editable, and don't use viewmodel
   public class TextViewElement : Region, IElement, ITabStop
   { 
     /// <summary>
     /// Source text to display formatted content.
     /// </summary>
-    public  string  text   { get { return _text; }  set { IndicateChange(_text != value); _text = value; } }
-    private string _text ;
+    public    string  text   { get { return _text; }  set { IndicateChange(_text != value); _text = value; } }          //// IElement
+    protected string _text ;
 
-    public string displayText
+    public virtual string displayText                                                                                 //// IElement
     {
       get
       {
@@ -21,11 +21,9 @@ namespace eMeL.ConsoleWindows
       }
     }
 
-    public string description               { get; set; }
+    public string description               { get; set; }                                         //// IElement
 
-    public bool   tabStop                   { get; set; } = false;
-
-    public Func<Object, bool>   enterCatch  { get; set; }
+    public bool   tabStop                   { get; set; } = false;                                //// ITabStop
 
     #region constructors
 
@@ -118,7 +116,7 @@ namespace eMeL.ConsoleWindows
       Normalize();
     }
 
-    private void Normalize()
+    protected virtual void Normalize()
     {
       if (width < 1)
       {

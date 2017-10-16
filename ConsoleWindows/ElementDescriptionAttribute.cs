@@ -5,23 +5,23 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-  public class ElementDescriptionAttribute : Attribute
-  {
-    public readonly ElementDescriptionInfo description;
+  //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+  //public class ElementDescriptionAttribute : Attribute
+  //{
+  //  public readonly ElementDescriptionInfo description;
 
-    public ElementDescriptionAttribute(bool editable, bool useViewmodel)
-    {
-      description.editable      = editable;
-      description.useViewmodel  = useViewmodel;
-    }
-  }
+  //  public ElementDescriptionAttribute(bool editable, bool useViewmodel)
+  //  {
+  //    description.editable      = editable;
+  //    description.useViewmodel  = useViewmodel;
+  //  }
+  //}
 
-  public struct ElementDescriptionInfo
-  {
-    public bool editable;
-    public bool useViewmodel;
-  }
+  //public struct ElementDescriptionInfo
+  //{
+  //  public bool editable;
+  //  public bool useViewmodel;
+  //}
 }
 
 /*

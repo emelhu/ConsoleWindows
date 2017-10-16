@@ -27,7 +27,7 @@ namespace eMeL.ConsoleWindows
     TextElement       = 13,
     TextElementActual = 14,
 
-    User0             = 16,
+    User0             = 32,
     User1             = User0 + 1,
     User2             = User0 + 2,
     User3             = User0 + 3,

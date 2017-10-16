@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace eMeL.ConsoleWindows
 {
-  public struct Position : IPosition
+  public struct Position : IPosition, IROPosition
   {                         
     public int  row    { get; set; }
     public int  col    { get; set; }
@@ -26,6 +26,30 @@ namespace eMeL.ConsoleWindows
     {
       this.row  = 0; 
       this.col  = 0;
+    }
+  }
+
+  public struct ROPosition : IROPosition
+  {                         
+    public int  row    { get; private set; }
+    public int  col    { get; private set; }
+
+    public ROPosition(int row, int col)
+    {
+      this.row  = row; 
+      this.col  = col;
+    }
+
+    public ROPosition(IROPosition pos)
+    {
+      this.row  = pos.row; 
+      this.col  = pos.col;
+    }
+
+    public ROPosition(IPosition pos)
+    {
+      this.row  = pos.row; 
+      this.col  = pos.col;
     }
   }
 

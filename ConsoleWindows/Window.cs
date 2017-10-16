@@ -52,7 +52,9 @@ namespace eMeL.ConsoleWindows
         return null;                                                                              // Not found
       }
     }
-    internal  ConsoleWindows     _consoleWindows { get; set; }
+    internal  ConsoleWindows     _consoleWindows  { get; set; }
+
+    public    bool               leaveQuestionAsk { get; set; } = ConsoleWindows.defaultLeaveQuestionAsk;
 
     public bool isRootWindow
     {
@@ -743,6 +745,30 @@ namespace eMeL.ConsoleWindows
     public Func<Object, string>       validate                  { get; set; }
 
     public Func<Object, bool>         closeable                 { get; set; }
+
+    public  bool emptyEnabled                                                                     // IValidating: Only technical property, don't work really
+    {  
+      get { return true; }
+      set {}
+    }
+
+    public  bool nullEnabled                                                                      // IValidating: Only technical property, don't work really
+    {  
+      get { return true; }
+      set {}
+    }
+
+    public  dynamic   minValue                                                                    // IValidating: Only technical property, don't work really
+    {  
+      get { return null; }
+      set {}
+    }
+
+    public  dynamic   maxValue                                                                    // IValidating: Only technical property, don't work really
+    {  
+      get { return null; }
+      set {}
+    }    
 
     #endregion
 

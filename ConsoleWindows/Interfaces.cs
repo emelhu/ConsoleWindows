@@ -13,6 +13,12 @@ namespace eMeL.ConsoleWindows
     int       col         { get; set; }
   }
 
+  public interface IROPosition
+  {
+    int       row         { get; }
+    int       col         { get; }
+  }
+
   public interface ISize
   {
     int       width       { get; set; }
@@ -53,32 +59,40 @@ namespace eMeL.ConsoleWindows
     /// Function receive reference of sender object.
     /// </summary>
     Func<Object, string> validate { get; set; }
+
+    /// <summary>
+    /// Common validation rule.
+    /// </summary>
+    bool      emptyEnabled  { get; set; }   
+
+    /// <summary>
+    /// Common validation rule.
+    /// </summary>
+    bool      nullEnabled  { get; set; }   
+
+    /// <summary>
+    /// Common validation rule.
+    /// </summary>
+    dynamic   minValue      { get; set; }
+
+    /// <summary>
+    /// Common validation rule.
+    /// </summary>
+    dynamic   maxValue      { get; set; }
   }
 
   public interface ITabStop
   {
-    bool      tabStop       { get; set; }
-
-    /// <summary>
-    /// Define a function for catch an enter-key (for example to close window).
-    /// </summary>
-    Func<Object, bool> enterCatch { get; set; }
+    bool              tabStop       { get; set; }
   }
 
   public interface IEditable
   {
-    bool      emptyEnabled  { get; set; }                                                   
+    bool              readOnly      { get; set; }
 
-    bool      readOnly      { get; set; }
-
-    EditMode  editMode      { get; set; }
-
-    int       maxEditLength { get; set; }
-
-    int       decimalDigits { get; set; }
-
-    dynamic   minValue      { get; set; }
-    dynamic   maxValue      { get; set; }
+    ConsoleKeyInfo?   KeyPress(ConsoleKeyInfo keyInfo);
+    
+    IROPosition       CursorPosition { get; }
   }
 
   public interface IElement : IRegion
