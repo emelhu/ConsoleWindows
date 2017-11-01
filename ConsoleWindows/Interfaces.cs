@@ -97,9 +97,11 @@ namespace eMeL.ConsoleWindows
 
   public interface IElement : IRegion
   {
-    string    displayText   { get; }
+    //string    displayText   { get; }
 
-    string    text          { get; set; }
+    string    GetDisplayText(bool editFormat = false);
+
+    //string    text          { get; set; }
 
     string    description   { get; set; }
   }

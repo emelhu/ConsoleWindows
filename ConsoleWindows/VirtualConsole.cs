@@ -372,6 +372,8 @@ namespace eMeL.ConsoleWindows
 
     internal          Position  actualCursorPosition;
 
+    public static     bool      insertKeyMode   = false;
+
     public void Refresh()
     {
       lastChange = Environment.TickCount;

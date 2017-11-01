@@ -25,7 +25,7 @@ namespace eMeL.ConsoleWindows
       {
         if (region is IElement element)
         {
-          return element.displayText;
+          return element.GetDisplayText(false);
         }
 
         return null;
@@ -40,13 +40,10 @@ namespace eMeL.ConsoleWindows
         {
           if (region is IEditable editable)
           {
-            if (! editable.readOnly)
-            {
-              return element.text;
-            }
+            return element.GetDisplayText(! editable.readOnly);
           }
 
-          return element.displayText;
+          return element.GetDisplayText(false);
         }
 
         return null;

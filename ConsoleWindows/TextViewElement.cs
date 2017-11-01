@@ -10,16 +10,15 @@ namespace eMeL.ConsoleWindows
     /// <summary>
     /// Source text to display formatted content.
     /// </summary>
-    public    string  text   { get { return _text; }  set { IndicateChange(_text != value); _text = value; } }          //// IElement
-    protected string _text ;
+    protected string  text  { get { return _text; }  set { IndicateChange(_text != value); _text = value; } }        //// IElement
+    private   string _text;
 
-    public virtual string displayText                                                                                 //// IElement
+    public virtual string GetDisplayText(bool editFormat = false)                                 //// IElement
     {
-      get
-      {
-        return text;
-      }
+      return text;
     }
+
+    public Func<string>   readContent = null;                                                     // readContent = () => { return "aaa"; };
 
     public string description               { get; set; }                                         //// IElement
 
@@ -27,91 +26,107 @@ namespace eMeL.ConsoleWindows
 
     #region constructors
 
-    public TextViewElement(Region region, string text = null)
+    public TextViewElement(Region region, Func<string> readContent = null)
       : base(region)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
 
-    public TextViewElement (int row, int col, int width, int height = 1, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
+    public TextViewElement (int row, int col, int width, int height = 1, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
       : base(row, col, width, height, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, int width, int height, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
+    public TextViewElement (IPosition position, int width, int height, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, width, height, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, int width, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
+    public TextViewElement (IPosition position, int width, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, width, 1, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, ISize size, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
+    public TextViewElement (IPosition position, ISize size, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, size, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (int row, int col, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(row, col, (String.IsNullOrEmpty(text) ? 1 : text.Length), 1, styleIndex)
+    static protected int DefaultContentLength(Func<string> readContent)
     {
-      this.text = text;
+      return ((readContent == null) || String.IsNullOrEmpty(readContent()) ? 1 : readContent().Length);
+    }
+
+    public TextViewElement (int row, int col, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(row, col, DefaultContentLength(readContent), 1, styleIndex)
+    {
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, string text, StyleIndex styleIndex = StyleIndex.TextElement)
+    public TextViewElement (IPosition position, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, 0, 1, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (int row, int col, int width, string text, StyleIndex styleIndex = StyleIndex.TextElement)
+    public TextViewElement (int row, int col, int width, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(row, col, width, 1, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (int row, int col, int width, int height, string text, StyleIndex styleIndex = StyleIndex.TextElement)
+    public TextViewElement (int row, int col, int width, int height, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(row, col, width, height, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, int width, string text, StyleIndex styleIndex = StyleIndex.TextElement)
+    public TextViewElement (IPosition position, int width, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, width, 1, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }
 
-    public TextViewElement (IPosition position, ISize size, string text, StyleIndex styleIndex = StyleIndex.TextElement)
+    public TextViewElement (IPosition position, ISize size, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, size, styleIndex)
     {
-      this.text = text;
+      this.text         = (readContent == null) ? null : readContent();
+      this.readContent  = readContent;
 
       Normalize();
     }

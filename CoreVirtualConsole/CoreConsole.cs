@@ -135,10 +135,15 @@ namespace eMeL.ConsoleWindows.Core
       }
 
       Console.Clear();
-      Console.SetCursorPosition(0, 0);                                
+      Console.SetCursorPosition(0, 0);    
+      
+      if (originalCursorSize < 0)
+      { // store original / start value
+        originalCursorSize = Console.CursorSize;
+      }
 
       int   colorByte        = 0;
-      int   colorPacketByte  = GetPackedStyle(0);                                                   // "charLoop == 0" situation
+      int   colorPacketByte  = GetPackedStyle(0);                                                 // "charLoop == 0" situation
       int   colorPacketStart = 0;                                                                 // "charLoop == 0" situation                                                               
       int   maxPosition      = this.rows * this.cols;
       
@@ -160,6 +165,7 @@ namespace eMeL.ConsoleWindows.Core
           Console.SetCursorPosition(col, row);
           Console.ForegroundColor = (ConsoleColor)(int)GetForegroundColor((byte)colorPacketByte);
           Console.BackgroundColor = (ConsoleColor)(int)GetBackgroundColor((byte)colorPacketByte);
+          Console.CursorSize      = (VirtualConsole.insertKeyMode) ? 100 : originalCursorSize;
 
           int len = charLoop - colorPacketStart;
           Debug.Assert(len > 0);
@@ -225,7 +231,8 @@ namespace eMeL.ConsoleWindows.Core
 
     #region others
 
-    public static bool traceEnabled = false;
+    public  static bool traceEnabled        = false;
+    private static int  originalCursorSize  = -1;
 
     #endregion
   }

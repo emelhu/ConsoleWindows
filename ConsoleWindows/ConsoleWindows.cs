@@ -426,26 +426,29 @@ namespace eMeL.ConsoleWindows
               if (keyInfoNullable != null) 
               {          
                 keyInfoNullable = editable.KeyPress((ConsoleKeyInfo)keyInfoNullable);
-                keyInfoNullable = ProcessKeyPress(keyInfoNullable, true);
 
-                #region sample
+                if (keyInfoNullable != null)
+                { 
+                  keyInfoNullable = ProcessKeyPress(keyInfoNullable, true);
 
-                //if (keyInfoNullable != null)
-                //{
-                //  ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
+                  #region sample
+                  //if (keyInfoNullable != null)
+                  //{
+                  //  ConsoleKeyInfo keyInfo = (ConsoleKeyInfo)keyInfoNullable;
 
-                //  bool controlKey = ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0);
-                //  bool shiftKey = ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0);
-                //  bool altKey = ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0);
+                  //  bool controlKey = ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0);
+                  //  bool shiftKey = ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0);
+                  //  bool altKey = ((keyInfo.Modifiers & ConsoleModifiers.Alt) != 0);
 
-                //  switch (keyInfo.Key)
-                //  {
-                //  } 
-                //}
+                  //  switch (keyInfo.Key)
+                  //  {
+                  //  } 
+                  //}
                 #endregion
+                }
               }
             }
-            else
+            else if (keyInfoNullable != null) 
             {
               keyInfoNullable = ProcessKeyPress(keyInfoNullable, true);
             }
@@ -579,7 +582,7 @@ namespace eMeL.ConsoleWindows
             break;
 
           case ConsoleKey.Insert:        
-            insertKeyMode = ! insertKeyMode;
+            VirtualConsole.insertKeyMode = ! VirtualConsole.insertKeyMode;
             keyInfoNullable = null;
             break;
 
@@ -998,7 +1001,7 @@ namespace eMeL.ConsoleWindows
 
     #region mode
 
-    public static bool insertKeyMode = true;
+
 
     #endregion
   }

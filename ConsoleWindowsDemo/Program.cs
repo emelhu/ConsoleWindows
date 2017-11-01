@@ -119,22 +119,26 @@ namespace ConsoleWindowsDemo
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
       var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
-      var textElement = new TextViewElement(0, 0, String.Join("", textArray));  
+
+      var textElement = new TextViewElement(0, 0, () => { return String.Join("", textArray);});  
       conWin.rootWindow.AddElement(textElement);
 
       for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
       {
-        textElement = new TextViewElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        string text = (rowLoop % 10).ToString();
+        textElement = new TextViewElement(rowLoop, 0, () => { return text; } );  
         conWin.rootWindow.AddElement(textElement);
       }
 
       conWin.styles[StyleIndex.User8] = new Style(WinColor.Red,  WinColor.Yellow);
       conWin.styles[StyleIndex.User9] = new Style(WinColor.Blue, WinColor.White);
 
-      textElement = new TextViewElement(10, 10, "Pressed key:", StyleIndex.User9);  
+      textElement = new TextViewElement(10, 10, () => { return "Pressed key:"; }, StyleIndex.User9);  
       conWin.rootWindow.AddElement(textElement);  
 
-      textElement = new TextViewElement(10, 24, 40, 1, StyleIndex.User8);  
+      string stateText = "";
+
+      textElement = new TextViewElement(10, 24, 40, 1, StyleIndex.User8, () => { return stateText; });  
       conWin.rootWindow.AddElement(textElement);  
 
       con.ApplyPreviewReadedKey(consoleKeyInfo =>
@@ -163,9 +167,10 @@ namespace ConsoleWindowsDemo
               text += " Ctrl";
             }
 
-            textElement.text = text;
+
+            stateText = text;                                                       // textElement.text
         
-            return consoleKeyInfo;                                                 // pass on this key to process [but you can modify it, for example uppercase use]
+            return consoleKeyInfo;                                                  // pass on this key to process [but you can modify it, for example uppercase use]
           });
 
       conWin.Start();
@@ -173,16 +178,17 @@ namespace ConsoleWindowsDemo
 
     public static void BorderAndAreaTest1()
     {
-      var con    = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo", 25, 80, styles);
+      var con = new CoreConsole("BorderAndAreaTest1 --- ConsoleWindowsDemo", 25, 80, styles);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
-      var textArray   = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
-      var textElement = new TextViewElement(0, 0, String.Join("", textArray));  
+      var textArray = Enumerable.Repeat("0123456789", conWin.cols / 10).ToArray();
+      var textElement = new TextViewElement(0, 0, () => { return String.Join("", textArray); } );  
       conWin.rootWindow.AddElement(textElement);
 
       for (int rowLoop = 1; rowLoop < conWin.rows; rowLoop++)
       {
-        textElement = new TextViewElement(rowLoop, 0, (rowLoop % 10).ToString());  
+        string text = (rowLoop % 10).ToString();
+        textElement = new TextViewElement(rowLoop, 0, () => { return text; } );  
         conWin.rootWindow.AddElement(textElement);
       }
 
@@ -195,7 +201,7 @@ namespace ConsoleWindowsDemo
       conWin.rootWindow.AddElement(area);
       conWin.rootWindow.AddElement(area2);
 
-      conWin.rootWindow.AddElement(new TextViewElement(23, 30, "...press Escape to end..."));
+      conWin.rootWindow.AddElement(new TextViewElement(23, 30, () => { return "...press Escape to end..."; } ));
 
       conWin.Start();
     }
@@ -205,7 +211,7 @@ namespace ConsoleWindowsDemo
       var con    = new CoreConsole("EditFieldsTest1 --- ConsoleWindowsDemo", 25, 80);
       var conWin = new ConsoleWindows(con, con.DefaultRootWindow());
 
-      conWin.rootWindow.AddElement(new TextViewElement(23, 15, "...press Escape or alt-F4 or ctrl-C to end..."));
+      conWin.rootWindow.AddElement(new TextViewElement(23, 15, () => { return "...press Escape or alt-F4 or ctrl-C to end..."; }));
 
       conWin.styles[StyleIndex.User0] = new Style(WinColor.Green, WinColor.Green);
       conWin.styles[StyleIndex.User1] = new Style(WinColor.Blue,  WinColor.Blue);
@@ -213,17 +219,23 @@ namespace ConsoleWindowsDemo
       conWin.rootWindow.AddElement(new Region(5,  5, 30, 10, StyleIndex.User0));
       conWin.rootWindow.AddElement(new Region(5, 40, 30, 10, StyleIndex.User1));
 
-      var textField1 = new TextEditElement( 6, 45, 20, "aaaaaa");
-      var textField2 = new TextEditElement( 7, 45, 20, "bbb");
-      var textField3 = new TextEditElement( 8, 45, 20, "cccccccccc");
-      var textField4 = new TextEditElement( 9, 45, 20, "dd");
-      var textField5 = new TextEditElement(10, 45, 20, "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+      string field1 = "aaaaaa";
+      string field2 = "bbb";
+      string field3 = "cccccccccccccc";
+      string field4 = "dd";
+      string field5 = "eeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeee eeeeeeeee";
 
-      conWin.rootWindow.AddElement(new TextViewElement( 6, 10, "edit 'aaa':"));
-      conWin.rootWindow.AddElement(new TextViewElement( 7, 10, "edit 'bbb':"));
-      conWin.rootWindow.AddElement(new TextViewElement( 8, 10, "edit 'ccc':"));
-      conWin.rootWindow.AddElement(new TextViewElement( 9, 10, "edit 'ddd':"));
-      conWin.rootWindow.AddElement(new TextViewElement(10, 10, "edit 'eee':"));
+      var textField1 = new TextEditElement( 6, 45, 20, () => { return field1; }, (s) => field1 = s );
+      var textField2 = new TextEditElement( 7, 45, 20, () => { return field2; }, (s) => field2 = s );
+      var textField3 = new TextEditElement( 8, 45, 20, () => { return field3; }, (s) => field3 = s );
+      var textField4 = new TextEditElement( 9, 45, 20, () => { return field4; }, (s) => field4 = s );
+      var textField5 = new TextEditElement(10, 45, 20, () => { return field5; }, (s) => field5 = s );
+
+      conWin.rootWindow.AddElement(new TextViewElement( 6, 10, () => { return "edit 'aaa':"; }));
+      conWin.rootWindow.AddElement(new TextViewElement( 7, 10, () => { return "edit 'bbb':"; }));
+      conWin.rootWindow.AddElement(new TextViewElement( 8, 10, () => { return "edit 'ccc':"; }));
+      conWin.rootWindow.AddElement(new TextViewElement( 9, 10, () => { return "edit 'ddd':"; }));
+      conWin.rootWindow.AddElement(new TextViewElement(10, 10, () => { return "edit 'eee':"; }));
 
       conWin.rootWindow.AddElement(textField1);
       conWin.rootWindow.AddElement(textField2);
@@ -232,6 +244,8 @@ namespace ConsoleWindowsDemo
       conWin.rootWindow.AddElement(textField5);
 
       conWin.Start();
+
+      int dummyCheckReturnContetsOf_fieldX_variables_withDebugger = 0;
     }
 
     public static void ViewAndCangeTest1()
@@ -247,11 +261,14 @@ namespace ConsoleWindowsDemo
 
       Thread.Sleep(3000);
 
-      var textElement1 = new TextEditElement(10, 40, "proba1");
-      var textElement2 = new TextEditElement(10, 60, "proba2");
+      var element1 = "proba1";
+      var element2 = "proba2";    
 
-      var textElement3 = new TextViewElement(23, 30, "...press Escape to end...");
-      var textElement4 = new TextViewElement(1,  60, "........", ownStyle3);
+      var textElement1 = new TextEditElement(10, 40, () => { return element1; }, (s) => element1 = s );
+      var textElement2 = new TextEditElement(10, 60, () => { return element2; }, (s) => element2 = s );
+
+      var textElement3 = new TextViewElement(23, 30, () => { return "...press Escape to end..."; });
+      var textElement4 = new TextViewElement(1,  60, () => { return "........"; }, ownStyle3);
 
       conWin.rootWindow.AddElement(textElement1);
       conWin.rootWindow.AddElement(textElement2);
@@ -259,11 +276,17 @@ namespace ConsoleWindowsDemo
       conWin.rootWindow.AddElement(textElement4);
       conWin.rootWindow.AddElement(textElement3);
 
-      conWin.rootWindow.AddElement(new TextEditElement(15, 40, "aaaaaaaaaaaaaaa"));
-      conWin.rootWindow.AddElement(new TextEditElement(16, 40, "bbbbb"));
-      conWin.rootWindow.AddElement(new TextEditElement(17, 40, 30, "cccc"));
-      conWin.rootWindow.AddElement(new TextEditElement(18, 40, "ddd"));
-      conWin.rootWindow.AddElement(new TextEditElement(19, 40, 30, "eeeeeeeeeeeeeee"));
+      string field1 = "aaaaaa";
+      string field2 = "bbb";
+      string field3 = "cccccccccccccc";
+      string field4 = "dd";
+      string field5 = "eeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeee eeeeeeeee";
+
+      conWin.rootWindow.AddElement(new TextEditElement(15, 40,     () => { return field1; }, (s) => field1 = s ));
+      conWin.rootWindow.AddElement(new TextEditElement(16, 40,     () => { return field2; }, (s) => field2 = s ));
+      conWin.rootWindow.AddElement(new TextEditElement(17, 40, 30, () => { return field3; }, (s) => field3 = s ));
+      conWin.rootWindow.AddElement(new TextEditElement(18, 40,     () => { return field4; }, (s) => field4 = s ));
+      conWin.rootWindow.AddElement(new TextEditElement(19, 40, 30, () => { return field5; }, (s) => field5 = s ));
 
       Task task = conWin.Start(false);                                                          // Don't wait
       
@@ -274,24 +297,24 @@ namespace ConsoleWindowsDemo
 
       Thread.Sleep(3000);
 
-      textElement1.text = "PROBA1";
+      field1 = "PROBA1";                                                  // textElement1.text 
 
       Thread.Sleep(3000);
 
-      textElement2.text = "PROBA2";
+      field2 = "PROBA2";                                                  // textElement2.text
 
       Task.Run(() =>
       {
         for (int i = 0; i < 100; i++)
         {
-          textElement4.text = (i).ToString();
+          field4 = (i).ToString();                                        // textElement4.text
           Thread.Sleep(1000);
         }
       });  
       
       task.Wait();
 
-      textElement3.text = "  !!!! STOPPED !!!!";
+      field3 = "  !!!! STOPPED !!!!";                 // textElement3.text
 
       Thread.Sleep(10000);
     }

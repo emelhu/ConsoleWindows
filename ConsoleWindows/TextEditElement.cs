@@ -10,6 +10,8 @@ namespace eMeL.ConsoleWindows
   //[ElementDescriptionAttribute(true, false)]                                                     // editable, but don't use viewmodel
   public class TextEditElement : TextViewElement, IValidating, IEditable
   {
+    public Action<string> saveContent = null;                                                     // saveContent = t => Debug.WriteLine(t);
+
     #region interfaces 
   
     /// <summary>
@@ -27,9 +29,21 @@ namespace eMeL.ConsoleWindows
 
     //public bool     tabStop                                                                     //// ITabStop  >>> see Normalize() for set default to TRUE;
 
-    public dynamic  minValue                  { get; set; } = null;
-    public dynamic  maxValue                  { get; set; } = null;
-    public int      maxEditLength             { get; set; } = 0;
+    public dynamic  minValue                  { get; set; } = null;                               // minimal value for check
+    public dynamic  maxValue                  { get; set; } = null;                               // maximal value for check
+    public int      maxEditLength             { get; set; } = 0;                                  // defined maximum for edit/check
+
+    public virtual  int  MaxTextLength()
+    {
+      if (maxEditLength > 0)
+      {
+        return maxEditLength;
+      }
+      else
+      {
+        return width;
+      }
+    }
     
     public  IROPosition       CursorPosition  { get { return _cursorPosition;} }                  //// IEditable
 
@@ -42,21 +56,21 @@ namespace eMeL.ConsoleWindows
       if (! emptyEnabled && ! string.IsNullOrWhiteSpace(text))
       {
         return ConsoleWindows.errorText_Empty;                                                      // Do not leave empty this element!
+      }     
+
+      int maxTextLength = MaxTextLength();
+
+      if (text.Length > maxTextLength)
+      {
+        return String.Format(ConsoleWindows.errorText_MaxLength, maxTextLength);                          // Length more then maximal!
       }
 
-      //if ((minValue != null) && (String.Compare(text, minValue) < 0))
-      //{
-      //  return String.Format(ConsoleWindows.errorText_MinValue, SizeLimitedText(minValue));             // Less then minimal!
-      //}
 
-      //if ((maxValue != null) && (String.Compare(text, maxValue) > 0))
-      //{
-      //  return String.Format(ConsoleWindows.errorText_MaxValue, SizeLimitedText(maxValue));             // More then maximal!
-      //}
+      string errText = IsValidExtension();
 
-      if ((maxEditLength > 0) && (text.Length > maxEditLength))
+      if (errText != null)
       {
-        return String.Format(ConsoleWindows.errorText_MaxLength, maxEditLength);                    // Length more then maximal!
+        return errText;
       }
 
 
@@ -66,6 +80,28 @@ namespace eMeL.ConsoleWindows
       }
 
       return null;                                                                                  // This element is valid, 'null' signals 'no error text'
+    }
+
+    protected virtual string IsValidExtension()
+    {
+      int maxTextLength = MaxTextLength();
+
+      if (text.Length > maxTextLength)
+      {
+        return String.Format(ConsoleWindows.errorText_MaxLength, maxTextLength);                  // Length more then maximal!
+      }
+
+      if ((minValue != null) && (String.Compare(text, (string)minValue) < 0))
+      {
+        return String.Format(ConsoleWindows.errorText_MinValue, SizeLimitedText(minValue));       // Less then minimal!
+      }
+
+      if ((maxValue != null) && (String.Compare(text, (string)maxValue) > 0))
+      {
+        return String.Format(ConsoleWindows.errorText_MaxValue, SizeLimitedText(maxValue));       // More then maximal!
+      }
+
+      return null;
     }
 
     public virtual ConsoleKeyInfo? KeyPress(ConsoleKeyInfo keyInfo)                               //// IEditable --- this can be overrided but don't need because virtual called functions.
@@ -163,7 +199,7 @@ namespace eMeL.ConsoleWindows
 
       if (appropriateKey)
       {
-        if (ConsoleWindows.insertKeyMode)
+        if (VirtualConsole.insertKeyMode)
         {
           InsertCharacter(keyInfo.KeyChar);
         }
@@ -180,13 +216,13 @@ namespace eMeL.ConsoleWindows
 
     #region cursor info
 
-    protected Position      _textPosition;
+    protected Position      textPosition;
     protected Position      _cursorPosition;
 
     protected virtual void  ModifyRelativeCursorCol(int columnsCount)
     {
       _cursorPosition.col += columnsCount;     
-      _textPosition.col   += columnsCount;   
+      textPosition.col   += columnsCount;   
 
       NormalizePositions();
     }
@@ -230,14 +266,16 @@ namespace eMeL.ConsoleWindows
 
       //
  
-      if (_textPosition.col < 0)
+      if (textPosition.col < 0)
       {
-        _textPosition.col = 0;
+        textPosition.col = 0;
       }
 
-      if (_textPosition.col >= _text.Length)
+      int maxTextLength = MaxTextLength();
+
+      if (textPosition.col >= maxTextLength)
       {
-        _textPosition.col = _text.Length - 1;
+        textPosition.col = maxTextLength - 1;
       }
 
       //
@@ -254,13 +292,13 @@ namespace eMeL.ConsoleWindows
 
     protected virtual void  InsertCharacter(char c)
     {
-      if (_textPosition.col >= _text.Length)
+      if (textPosition.col >= text.Length)
       {
         text += c;              //TEST: !!!
       }
       else
       {
-        text = text.Insert(_textPosition.col, c.ToString());          //TEST: !!!
+        text = text.Insert(textPosition.col, c.ToString());          //TEST: !!!
       }
 
       NormalizePositions();
@@ -268,14 +306,14 @@ namespace eMeL.ConsoleWindows
 
     protected virtual void  ReplaceCharacter(char c)
     {
-      if (_textPosition.col >= _text.Length)
+      if ((textPosition.col < 0) || (textPosition.col >= text.Length))
       {
         text += c;                                                    //TEST: !!!
       }
       else
       {
-        var arr = _text.ToCharArray();
-        arr[_textPosition.col] = c;                                   //TEST: !!!
+        var arr = text.ToCharArray();
+        arr[textPosition.col] = c;                                   //TEST: !!!
         text = new string(arr);
       }
 
@@ -288,15 +326,15 @@ namespace eMeL.ConsoleWindows
     {
       if (backSpace)
       {
-        if ((_textPosition.col > 0) && (_textPosition.col <= _text.Length))
+        if ((textPosition.col > 0) && (textPosition.col <= text.Length))
         {
-          _text.Remove(_textPosition.col - 1);
+          text = text.Remove(textPosition.col - 1, 1);
           ModifyRelativeCursorCol(-1);     
         }
       }
-      else if (_textPosition.col < _text.Length)
+      else if ((textPosition.col >= 0) && (textPosition.col < text.Length))
       {
-        _text.Remove(_textPosition.col);                                              //TEST: !!! 
+        text = text.Remove(textPosition.col, 1);                                              //TEST: !!! 
       }
 
       NormalizePositions();
@@ -312,97 +350,97 @@ namespace eMeL.ConsoleWindows
       throw new NotImplementedException("OOP object hierarchy design error!");
     }
 
-    public TextEditElement(Region region, string text = null)
-      : base(region)
+    public TextEditElement(Region region, Func<string> readContent = null, Action<string> saveContent = null)
+      : base(region, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
 
-    public TextEditElement (int row, int col, int width, int height = 1, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
-      : base(row, col, width, height, styleIndex)
+    public TextEditElement (int row, int col, int width, int height = 1, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null, Action<string> saveContent = null)
+      : base(row, col, width, height, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, int width, int height, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
-    : base(position, width, height, styleIndex)
+    public TextEditElement (IPosition position, int width, int height, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null, Action<string> saveContent = null)
+    : base(position, width, height, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, int width, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
-    : base(position, width, 1, styleIndex)
+    public TextEditElement (IPosition position, int width, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null, Action<string> saveContent = null)
+    : base(position, width, 1, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, ISize size, StyleIndex styleIndex = StyleIndex.TextElement, string text = null)
-    : base(position, size, styleIndex)
+    public TextEditElement (IPosition position, ISize size, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null, Action<string> saveContent = null)
+    : base(position, size, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (int row, int col, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(row, col, (String.IsNullOrEmpty(text) ? 1 : text.Length), 1, styleIndex)
+    public TextEditElement (int row, int col, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(row, col, DefaultContentLength(readContent), 1, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(position, 0, 1, styleIndex)
+    public TextEditElement (IPosition position, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(position, 0, 1, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (int row, int col, int width, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(row, col, width, 1, styleIndex)
+    public TextEditElement (int row, int col, int width, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(row, col, width, 1, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (int row, int col, int width, int height, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(row, col, width, height, styleIndex)
+    public TextEditElement (int row, int col, int width, int height, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(row, col, width, height, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, int width, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(position, width, 1, styleIndex)
+    public TextEditElement (IPosition position, int width, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(position, width, 1, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
 
-    public TextEditElement (IPosition position, ISize size, string text, StyleIndex styleIndex = StyleIndex.TextElement)
-      : base(position, size, styleIndex)
+    public TextEditElement (IPosition position, ISize size, Func<string> readContent, Action<string> saveContent, StyleIndex styleIndex = StyleIndex.TextElement)
+      : base(position, size, styleIndex, readContent)
     {
-      this.text = text;
+      this.saveContent  = saveContent;
 
       Normalize();
     }
     #endregion
 
-    //#region Initialize / default 
+    #region Initialize / default / helper
 
     protected override void Normalize()
     {
@@ -411,18 +449,16 @@ namespace eMeL.ConsoleWindows
       tabStop = true;                                                                             // Default value for Edit Element
     }
 
+    public static string SizeLimitedText(string outputText, int maxLen = 40)
+    {
+      if ((outputText.Length > maxLen) && (maxLen > 6))
+      {
+        return outputText.Substring(0, maxLen - 1) + "►";
+      }
 
+      return outputText;
+    }
 
-    //public string SizeLimitedText(string text, int maxLen = 40)
-    //{
-    //  if ((text.Length > maxLen) && (maxLen > 6))
-    //  {
-    //    return text.Substring(0, maxLen - 1) + "►";
-    //  }
-
-    //  return text;
-    //}   
-
-    //#endregion
+    #endregion
   }
 }
