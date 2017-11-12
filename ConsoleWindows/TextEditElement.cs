@@ -10,16 +10,77 @@ namespace eMeL.ConsoleWindows
   //[ElementDescriptionAttribute(true, false)]                                                     // editable, but don't use viewmodel
   public class TextEditElement : TextViewElement, IValidating, IEditable
   {
+    #region added news
+
+    /// <summary>
+    /// Source text to display formatted content.
+    /// </summary>
+    protected string text { get { return _text; } set { IndicateChange(_text != value); _text = value; } }         
+    private string _text;
+
     public Action<string> saveContent = null;                                                     // saveContent = t => Debug.WriteLine(t);
 
+    internal virtual void OnEnter()
+    {
+      if (readContent != null)
+      {
+        text = readContent();
+      }
+
+      text = String.Empty;
+    }
+    public Action<TextEditElement> onEnter = null;
+
+    /// <summary>
+    /// Called by manager of this field (ConsoleWindows). Validate typed content and store back it to ViewModel.
+    /// </summary>
+    /// <param name="isUserInteraction">True if user leave field and go to amother (maybe code can normalize GUI content by 'onExit' delegate [This is called by OnExit() processus].
+    /// False if </param>
+    /// <returns>return null if exit OK, errortext otherwise</returns>
+    internal string OnExit(bool isUserInteraction)                                         
+    {  
+      try
+      {
+        string errText = ValidationInternal();
+
+        if (errText == null)
+        {
+          if ((errText == null) && (saveContent != null))
+          {
+            saveContent(text);
+          }
+
+          if (isUserInteraction && (onExit != null))
+          {
+            errText = onExit(this);
+          }
+        }
+
+        return errText;
+      }
+      catch (Exception exception)
+      {
+        return exception.Message;
+      }
+    }
+
+    /// <summary>
+    /// Called from OnExit(true) (with "User Interaction" parameter) for organize/reorganize fields.
+    /// This called by ConsoleWindows key process.
+    /// It don't called by IsValid()
+    /// </summary>
+    public Func<TextEditElement, string> onExit = null;                                         // return null if exit OK, errortext otherwise
+    #endregion
+
+
     #region interfaces 
-  
+
     /// <summary>
     /// Define a function for validate content of TextElement.
     /// It returns a null if no error, or an error text.
     /// </summary>
     public Func<Object, string> validate      { get; set; }                                       //// IValidating
-    /// </summary>
+    
 
     public bool     emptyEnabled              { get; set; } = true;                               //// IValidating
 
@@ -53,9 +114,14 @@ namespace eMeL.ConsoleWindows
     /// <returns>Error text or null if valid.</returns>
     public string IsValid()                                                                       //// IValidating
     {
+      return OnExit(false);                                                               
+    }
+
+    private string ValidationInternal()                                                                       
+    {
       if (! emptyEnabled && ! string.IsNullOrWhiteSpace(text))
       {
-        return ConsoleWindows.errorText_Empty;                                                      // Do not leave empty this element!
+        return ConsoleWindows.errorText_Empty;                                                    // Do not leave empty this element!
       }     
 
       int maxTextLength = MaxTextLength();
@@ -66,7 +132,7 @@ namespace eMeL.ConsoleWindows
       }
 
 
-      string errText = IsValidExtension();
+      string errText = ValidionExtension();
 
       if (errText != null)
       {
@@ -76,13 +142,22 @@ namespace eMeL.ConsoleWindows
 
       if (validate != null)
       {
-        return validate(this);
+        errText = validate(this);
+
+        if (errText != null)
+        {
+          return errText;
+        }
       }
 
       return null;                                                                                  // This element is valid, 'null' signals 'no error text'
     }
 
-    protected virtual string IsValidExtension()
+    /// <summary>
+    /// Validation check (dependency) for edit type. Protected to derivation.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual string ValidionExtension()
     {
       int maxTextLength = MaxTextLength();
 
@@ -292,7 +367,12 @@ namespace eMeL.ConsoleWindows
 
     protected virtual void  InsertCharacter(char c)
     {
-      if (textPosition.col >= text.Length)
+      if (String.IsNullOrEmpty(text))
+      {
+        text = c.ToString();
+        textPosition.col = 0;
+      }
+      else if (textPosition.col >= text.Length)
       {
         text += c;              //TEST: !!!
       }
@@ -306,7 +386,12 @@ namespace eMeL.ConsoleWindows
 
     protected virtual void  ReplaceCharacter(char c)
     {
-      if ((textPosition.col < 0) || (textPosition.col >= text.Length))
+      if (String.IsNullOrEmpty(text))
+      {
+        text = c.ToString();
+        textPosition.col = -1;
+      }
+      else if ((textPosition.col < 0) || (textPosition.col >= text.Length))
       {
         text += c;                                                    //TEST: !!!
       }
@@ -324,7 +409,12 @@ namespace eMeL.ConsoleWindows
 
     protected virtual void  DeleteCharacter(bool backSpace)
     {
-      if (backSpace)
+      if (String.IsNullOrEmpty(text))
+      {
+        text = String.Empty;
+        textPosition.col = 0;
+      }
+      else if (backSpace)
       {
         if ((textPosition.col > 0) && (textPosition.col <= text.Length))
         {

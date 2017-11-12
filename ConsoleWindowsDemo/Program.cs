@@ -295,26 +295,32 @@ namespace ConsoleWindowsDemo
       region.row += 5;
       area.border = new Border(Border.defaultBorderFramePattern2);
 
-      Thread.Sleep(3000);
-
-      field1 = "PROBA1";                                                  // textElement1.text 
+      conWin.rootWindow.IndicateChange();
 
       Thread.Sleep(3000);
 
-      field2 = "PROBA2";                                                  // textElement2.text
+      field1 = "PROBA1";                                                                          // textElement1.text 
+      conWin.rootWindow.IndicateChange(); 
+
+      Thread.Sleep(3000);
+
+      field2 = "PROBA2";                                                                          // textElement2.text
+      conWin.rootWindow.IndicateChange(); 
 
       Task.Run(() =>
       {
         for (int i = 0; i < 100; i++)
         {
-          field4 = (i).ToString();                                        // textElement4.text
+          field4 = (i).ToString();                                                                // textElement4.text
+          conWin.rootWindow.IndicateChange();
           Thread.Sleep(1000);
         }
       });  
       
       task.Wait();
 
-      field3 = "  !!!! STOPPED !!!!";                 // textElement3.text
+      field3 = "  !!!! STOPPED !!!!";                                                             // textElement3.text
+      conWin.rootWindow.IndicateChange();
 
       Thread.Sleep(10000);
     }

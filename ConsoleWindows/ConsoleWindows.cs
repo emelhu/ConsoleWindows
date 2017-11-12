@@ -658,7 +658,16 @@ namespace eMeL.ConsoleWindows
       {
         DisplayMessage(actualWindow.actualElement.description, MessageType.description);
 
-        if (actualWindow.actualElement is IValidating validating)
+        if (actualWindow.actualElement is TextEditElement textEditElement)
+        {
+          string errorMessage = textEditElement.OnExit(true);
+
+          if (!String.IsNullOrWhiteSpace(errorMessage))
+          {
+            DisplayMessage(errorMessage, MessageType.error);
+          }
+        }
+        else if (actualWindow.actualElement is IValidating validating)
         {
           string errorMessage = validating.IsValid();
 

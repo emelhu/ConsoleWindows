@@ -97,11 +97,7 @@ namespace eMeL.ConsoleWindows
 
   public interface IElement : IRegion
   {
-    //string    displayText   { get; }
-
     string    GetDisplayText(bool editFormat = false);
-
-    //string    text          { get; set; }
 
     string    description   { get; set; }
   }
@@ -129,7 +125,7 @@ namespace eMeL.ConsoleWindows
     bool    leftArrowVisible      { get; set; }
     bool    rightArrowVisible     { get; set; }
     int?    horizontalPosition    { get; set; }
-  }
+  }  
 }
 
 /*

@@ -7,15 +7,14 @@ namespace eMeL.ConsoleWindows
   //[ElementDescriptionAttribute(false, false)]                                                     // not editable, and don't use viewmodel
   public class TextViewElement : Region, IElement, ITabStop
   { 
-    /// <summary>
-    /// Source text to display formatted content.
-    /// </summary>
-    protected string  text  { get { return _text; }  set { IndicateChange(_text != value); _text = value; } }        //// IElement
-    private   string _text;
-
     public virtual string GetDisplayText(bool editFormat = false)                                 //// IElement
     {
-      return text;
+      if (readContent != null)
+      {
+        return readContent();
+      }
+
+      return String.Empty;
     }
 
     public Func<string>   readContent = null;                                                     // readContent = () => { return "aaa"; };
@@ -29,7 +28,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement(Region region, Func<string> readContent = null)
       : base(region)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -39,7 +38,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (int row, int col, int width, int height = 1, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
       : base(row, col, width, height, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -48,7 +47,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, int width, int height, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, width, height, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -57,7 +56,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, int width, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, width, 1, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -66,7 +65,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, ISize size, StyleIndex styleIndex = StyleIndex.TextElement, Func<string> readContent = null)
     : base(position, size, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -80,7 +79,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (int row, int col, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(row, col, DefaultContentLength(readContent), 1, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -89,7 +88,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, 0, 1, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -98,7 +97,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (int row, int col, int width, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(row, col, width, 1, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -107,7 +106,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (int row, int col, int width, int height, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(row, col, width, height, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -116,7 +115,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, int width, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, width, 1, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -125,7 +124,7 @@ namespace eMeL.ConsoleWindows
     public TextViewElement (IPosition position, ISize size, Func<string> readContent, StyleIndex styleIndex = StyleIndex.TextElement)
       : base(position, size, styleIndex)
     {
-      this.text         = (readContent == null) ? null : readContent();
+      //this.text         = (readContent == null) ? null : readContent();
       this.readContent  = readContent;
 
       Normalize();
@@ -135,6 +134,8 @@ namespace eMeL.ConsoleWindows
     {
       if (width < 1)
       {
+        string text = GetDisplayText(false);
+
         width = String.IsNullOrEmpty(text) ? 1 : text.Length;
       }
 

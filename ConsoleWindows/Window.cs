@@ -555,17 +555,21 @@ namespace eMeL.ConsoleWindows
     /// </summary>
     /// <param name="region">Element or window to check.</param>
     /// <returns>Error text or null if valid.</returns>
-    private string IsItemValid(IRegion region)
+    private string IsItemValid(IRegion region, bool stepToNextItem = false)
     {
       if (region != null)
       {
-        if (region is IValidating validating)
+        if (stepToNextItem && (region is TextEditElement textEditElement))
         {
-          return validating.IsValid();
+          return textEditElement.OnExit(stepToNextItem);                                          // contains IsValid() too
         }
         else if (region is Window<IViewModel> window)
         {
-          return window.IsValid();
+          return window.IsValidInternal(stepToNextItem);
+        }
+        else if (region is IValidating validating)
+        {
+          return validating.IsValid();
         }
       }
 
@@ -578,11 +582,16 @@ namespace eMeL.ConsoleWindows
     /// <returns>Error text or null if valid.</returns>
     public string IsValid()
     {
+      return IsValidInternal(false);                                                              // Valid, none error message.
+    }
+
+    internal string IsValidInternal(bool isUserInteraction)
+    {
       if (state == State.Editable)
       {
         foreach (var region in elements)
         {
-          var errorMessage = IsItemValid(region);
+          var errorMessage = IsItemValid(region, isUserInteraction);
 
           if (errorMessage != null)
           {
@@ -596,7 +605,7 @@ namespace eMeL.ConsoleWindows
         }
       }
 
-      return null;                                                                                // Valid, none error message.
+      return null;
     }
 
     public void ToFirstItem()
@@ -626,7 +635,7 @@ namespace eMeL.ConsoleWindows
         {
           if (IsItemApplicable(region))  
           {      
-            if (IsItemValid(_actualRegion) != null)
+            if (IsItemValid(_actualRegion, true) != null)
             {
               return;
             }
@@ -646,7 +655,7 @@ namespace eMeL.ConsoleWindows
           ToFirstItem();
           return;
         }
-        else if (IsItemValid(_actualRegion) != null) 
+        else if (IsItemValid(_actualRegion, true) != null) 
         { // This field content isn't valid, can't skip to next 
           return;
         }
